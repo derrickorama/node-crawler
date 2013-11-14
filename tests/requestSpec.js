@@ -148,4 +148,33 @@ describe('Crawler', function () {
 		crawler.queue(NON_PAGE_URLS_PAGE);
 	});
 
+	it('should have a default retries property of 0', function () {
+		var crawler = new Crawler();
+		expect(crawler.retries).toBe(0);
+	});
+
+	it('should change number of retries if specified', function () {
+		var crawler = new Crawler({ retries: 1 });
+		expect(crawler.retries).toBe(1);
+	});
+
+	it('should retry a failed page if it fails', function (done) {
+		var requests = 0;
+
+		var crawler = new Crawler({
+			retries: 1,
+			onDrain: function () {
+				expect(requests).toBe(2);
+				done();
+			}
+		});
+
+		crawler._crawlPage = function () {
+			requests++;
+			Crawler.prototype._crawlPage.apply(crawler, arguments);
+		};
+
+		crawler.queue('http://dropbox.com/trololololo', false);
+	});
+
 });

@@ -24,6 +24,7 @@ var Crawler = function (params) {
 	this.onDrain = params.onDrain || function () {};
 	this.onError = params.onError || function () {};
 	this.onPageCrawl = params.onPageCrawl || function () {};
+	this.retries = params.retries || 0;
 	this.timeout = params.timeout || 60000;
 
 	this._queue.drain = function () {
@@ -136,6 +137,20 @@ Crawler.prototype = {
 			if (crawler._killed === true) {
 				callback();
 				return false;
+			}
+
+			// Try to load the page again if more than 0 retries are specified
+			if (crawler.retries > 0) {
+				if (pageInfo._retries === undefined) {
+					pageInfo._retries = 0;
+				}
+
+				// If retries haven't reached the maximum retries, retry the request
+				if (pageInfo._retries < crawler.retries) {
+					pageInfo._retries++;
+					crawler._crawlPage(pageInfo, callback);
+					return false;
+				}
 			}
 
 			if (error === null && response.statusCode === 200) {
