@@ -158,7 +158,7 @@ describe('Crawler', function () {
 		expect(crawler.retries).toBe(1);
 	});
 
-	it('should retry a failed page if it fails', function (done) {
+	it('should retry a failed page if it fails and the number of retries is specified', function (done) {
 		var requests = 0;
 
 		var crawler = new Crawler({
