@@ -9,6 +9,28 @@ describe('Crawler', function () {
 		NON_PAGE_URLS_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/non-page-urls.html',
 		RELATIVE_URL_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/relative-link-page.html';
 
+	it('should have a default timeout of 60000', function () {
+		var crawler = new Crawler();
+		expect(crawler.timeout).toBe(60000);
+	});
+
+	it('should change the timeout of a request based on the timeout specified', function (done) {
+		var crawler = new Crawler({
+			timeout: 1,
+			onDrain: function () {
+				var timeEnd = new Date();
+				// Make sure the timing falls within .1 seconds of the timeout
+				expect((timeEnd - timeStart)/1000).toBeCloseTo(0, 1);
+				done();
+			}
+		});
+		
+		expect(crawler.timeout).toBe(1);
+
+		var timeStart = new Date();
+		crawler.queue('http://dropbox.com', false);
+	});
+
 	it('should support HTTPS urls', function (done) {
 		var crawler = new Crawler({
 			onPageCrawl: function (page) {

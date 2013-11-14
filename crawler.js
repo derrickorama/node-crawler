@@ -127,7 +127,11 @@ Crawler.prototype = {
 			page = pageInfo.page,
 			method = pageInfo.method;
 
-		request[method](page.url, function (error, response, body) {
+		request({
+			url: page.url,
+			method: method,
+			timeout: this.timeout
+		}, function (error, response, body) {
 			// If the crawler was killed before this request was ready, finish the process
 			if (crawler._killed === true) {
 				callback();
@@ -163,6 +167,8 @@ Crawler.prototype = {
 				crawler[callback].apply(this, args);
 			}
 		});
+
+		return true;
 	},
 	kill: function () {
 		this._killed = true;

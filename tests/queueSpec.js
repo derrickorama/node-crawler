@@ -18,6 +18,22 @@ describe('Crawler queue', function () {
 		crawler.queue('http://google.com', false);
 	});
 
+	it('should indicate whether or not a url was added to the queue', function (done) {
+		var urlAdded = false,
+			urlAddedAgain = true;
+
+		var crawler = new Crawler({
+			onDrain: function () {
+				expect(urlAdded).toBe(true);
+				expect(urlAddedAgain).toBe(false);
+				done();
+			}
+		});
+		
+		urlAdded = crawler.queue('http://www.google.com', false);
+		urlAddedAgain = crawler.queue('http://www.google.com', false);
+	});
+
 	it('should crawl a URL when one is queued', function (done) {
 		var crawler = new Crawler({
 			onPageCrawl: function (response, data) {

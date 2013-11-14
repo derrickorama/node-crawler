@@ -3,11 +3,6 @@ var Crawler = require('../crawler.js').Crawler;
 
 describe('Crawler', function () {
 
-	it('should have a default timeout of 60000', function () {
-		var crawler = new Crawler();
-		expect(crawler.timeout).toBe(60000);
-	});
-
 	it('should have an empty pagesCrawled object by default', function () {
 		var crawler = new Crawler();
 		expect(_.keys(crawler._pages).length).toBe(0);
