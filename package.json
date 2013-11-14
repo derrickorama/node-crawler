@@ -4,10 +4,17 @@
     "version": "0.0.1",
     "author": "Derrick Gall",
     "engines": ["node"],
+    "devDependencies": {
+        "jasmine-node": "1.11.0",
+        "underscore": "1.5.2"
+    },
     "dependencies": {
-        "async": "latest",
-        "cheerio": "latest",
-        "request": "latest",
-        "underscore": "latest"
+        "async": "0.2.9",
+        "cheerio": "0.12.4",
+        "request": "2.27.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/derrickorama/node-crawler.git"
     }
 }

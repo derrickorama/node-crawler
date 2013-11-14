@@ -4,7 +4,6 @@ var https = require('https');
 var urllib = require('url');
 var cheerio = require('cheerio');
 var request = require('request');
-var _ = require('underscore');
 
 var Crawler = function (params) {
 	if (typeof params !== 'object') {
@@ -60,13 +59,19 @@ Page.prototype = {
 Crawler.prototype = {
 	_responseSuccess: function (pageInfo, response, body, callback) {
 		var crawler = this,
-			page = pageInfo.page;
+			i,
+			page = pageInfo.page,
+			pageLink,
+			pageLinkData,
+			pageLinksLength;
 
 		page.setHTML(body);
 
 		if (pageInfo.crawlLinks === true) {
-			_.each(page.links, function (pageLink) {
-				var pageLinkData = urllib.parse(pageLink);
+			pageLinksLength = page.links.length;
+			for (i = 0; i < pageLinksLength; i++) {
+				pageLink = page.links[i];
+				pageLinkData = urllib.parse(pageLink);
 
 				// Ignore mailto: links
 				if (
@@ -75,7 +80,7 @@ Crawler.prototype = {
 					pageLinkData.protocol === 'tel:' ||
 					pageLinkData.path === null
 				) {
-					return false;
+					continue;
 				}
 
 				// Make sure we're crawling a link on the same domain
@@ -83,12 +88,12 @@ Crawler.prototype = {
 					
 					// Don't crawl external URLs if external URL crawling is not specified
 					if (crawler._crawlExternal !== true) {
-						return false;
+						continue;
 					}
 
 					crawler.queue(pageLink, false, true);
 
-					return false;
+					continue;
 				}
 
 				// If this is a relative URL, resolve the path
@@ -97,7 +102,7 @@ Crawler.prototype = {
 				}
 
 				crawler.queue(pageLink);
-			});
+			}
 		}
 
 		callback('onPageCrawl', [page, response]);
