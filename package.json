@@ -1,0 +1,13 @@
+{
+    "name": "node-crawler",
+    "description": "A web crawler module for Node.js.",
+    "version": "0.0.1",
+    "author": "Derrick Gall",
+    "engines": ["node"],
+    "dependencies": {
+        "async": "latest",
+        "cheerio": "latest",
+        "request": "latest",
+        "underscore": "latest"
+    }
+}
