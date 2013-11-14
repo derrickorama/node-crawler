@@ -18,6 +18,11 @@ describe('Crawler', function () {
 		expect(crawler._crawlExternal).toBe(false);
 	});
 
+	it('should not be "killed" by default', function () {
+		var crawler = new Crawler();
+		expect(crawler._killed).toBe(false);
+	});
+
 	it('should set a timeout if one is provided during init', function () {
 		var crawler = new Crawler({ timeout: 1000 });
 		expect(crawler.timeout).toBe(1000);

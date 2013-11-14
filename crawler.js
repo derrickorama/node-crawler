@@ -14,6 +14,7 @@ var Crawler = function (params) {
 
 	// Private properties
 	this._crawlExternal = params.crawlExternal || false;
+	this._killed = false;
 	this._pages = {};
 	this._queue = async.queue(function (page, callback) {
 		crawler._crawlPage(page, callback);
@@ -127,6 +128,12 @@ Crawler.prototype = {
 			method = pageInfo.method;
 
 		request[method](page.url, function (error, response, body) {
+			// If the crawler was killed before this request was ready, finish the process
+			if (crawler._killed === true) {
+				callback();
+				return false;
+			}
+
 			if (error === null && response.statusCode === 200) {
 				crawler._responseSuccess(pageInfo, response, body, callback);
 			} else {
@@ -152,8 +159,15 @@ Crawler.prototype = {
 		};
 
 		this._queue.push(this._pages[url], function (callback, args) {
-			crawler[callback].apply(this, args);
+			if (callback !== undefined) {
+				crawler[callback].apply(this, args);
+			}
 		});
+	},
+	kill: function () {
+		this._killed = true;
+		this._queue.tasks = [];
+		this._queue.process = function () {}; // This makes any future calls 
 	}
 };
 
