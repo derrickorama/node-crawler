@@ -131,7 +131,10 @@ Crawler.prototype = {
 		request({
 			url: page.url,
 			method: method,
-			timeout: this.timeout
+			timeout: this.timeout,
+			headers: {
+				'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.48 Safari/537.36'
+			}
 		}, function (error, response, body) {
 			// If the crawler was killed before this request was ready, finish the process
 			if (crawler._killed === true) {

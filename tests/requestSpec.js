@@ -196,4 +196,14 @@ describe('Crawler', function () {
 		crawler.queue('http://dropbox.com/trololololo', false);
 	});
 
+	it('should use the dummy user agent string by default for any request', function (done) {
+		var crawler = new Crawler({
+			onPageCrawl: function (page, response) {
+				expect(response.request.headers['User-Agent']).toBe('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.48 Safari/537.36');
+				done();
+			}
+		});
+		crawler.queue('http://dropbox.com', false);
+	});
+
 });
