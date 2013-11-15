@@ -158,6 +158,25 @@ describe('Crawler', function () {
 		expect(crawler.retries).toBe(1);
 	});
 
+	it('should not retry a page if it does not fail and the number of retries is specified', function (done) {
+		var requests = 0;
+
+		var crawler = new Crawler({
+			retries: 1,
+			onDrain: function () {
+				expect(requests).toBe(1);
+				done();
+			}
+		});
+
+		crawler._crawlPage = function () {
+			requests++;
+			Crawler.prototype._crawlPage.apply(crawler, arguments);
+		};
+
+		crawler.queue('http://dropbox.com/', false);
+	});
+
 	it('should retry a failed page if it fails and the number of retries is specified', function (done) {
 		var requests = 0;
 

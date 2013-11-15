@@ -139,23 +139,24 @@ Crawler.prototype = {
 				return false;
 			}
 
-			// Try to load the page again if more than 0 retries are specified
-			if (crawler.retries > 0) {
-				if (pageInfo._retries === undefined) {
-					pageInfo._retries = 0;
-				}
-
-				// If retries haven't reached the maximum retries, retry the request
-				if (pageInfo._retries < crawler.retries) {
-					pageInfo._retries++;
-					crawler._crawlPage(pageInfo, callback);
-					return false;
-				}
-			}
-
 			if (error === null && response.statusCode === 200) {
 				crawler._responseSuccess(pageInfo, response, body, callback);
 			} else {
+				// Try to load the page again if more than 0 retries are specified
+				if (crawler.retries > 0) {
+					if (pageInfo._retries === undefined) {
+						pageInfo._retries = 0;
+					}
+
+					// If retries haven't reached the maximum retries, retry the request
+					if (pageInfo._retries < crawler.retries) {
+						pageInfo._retries++;
+						crawler._crawlPage(pageInfo, callback);
+						return false;
+					}
+				}
+
+				// This page is bad, send error
 				crawler._responseError(pageInfo, response, error, callback);
 			}
 		});
