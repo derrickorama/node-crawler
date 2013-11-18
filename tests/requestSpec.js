@@ -14,6 +14,16 @@ describe('Crawler', function () {
 		expect(crawler.timeout).toBe(60000);
 	});
 
+	it('should not use strict ssl by default', function (done) {
+		var crawler = new Crawler({
+			onPageCrawl: function (page, response) {
+				done();
+			}
+		});
+		expect(crawler.strictSSL).toBe(false);
+		crawler.queue(BASIC_LINK_PAGE, false);
+	});
+
 	it('should change the timeout of a request based on the timeout specified', function (done) {
 		var crawler = new Crawler({
 			timeout: 1,
@@ -39,6 +49,17 @@ describe('Crawler', function () {
 			}
 		});
 
+		crawler.queue(BASIC_LINK_PAGE, false);
+	});
+
+	it('should allow you to turn on strict ssl', function (done) {
+		var crawler = new Crawler({
+			onPageCrawl: function (page, response) {
+				done();
+			},
+			strictSSL: true
+		});
+		expect(crawler.strictSSL).toBe(true);
 		crawler.queue(BASIC_LINK_PAGE, false);
 	});
 

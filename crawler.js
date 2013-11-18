@@ -25,6 +25,7 @@ var Crawler = function (params) {
 	this.onError = params.onError || function () {};
 	this.onPageCrawl = params.onPageCrawl || function () {};
 	this.retries = params.retries || 0;
+	this.strictSSL = params.strictSSL || false;
 	this.timeout = params.timeout || 60000;
 
 	this._queue.drain = function () {
@@ -146,6 +147,7 @@ Crawler.prototype = {
 			url: page.url,
 			method: method,
 			timeout: this.timeout,
+			strictSSL: this.strictSSL,
 			headers: {
 				'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.48 Safari/537.36'
 			}
