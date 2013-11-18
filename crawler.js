@@ -21,6 +21,7 @@ var Crawler = function (params) {
 	}, 2);
 
 	// Public properties
+	this.acceptCookies = params.acceptCookies !== undefined ? params.acceptCookies : true;
 	this.onDrain = params.onDrain || function () {};
 	this.onError = params.onError || function () {};
 	this.onPageCrawl = params.onPageCrawl || function () {};
@@ -148,6 +149,7 @@ Crawler.prototype = {
 			method: method,
 			timeout: this.timeout,
 			strictSSL: this.strictSSL,
+			jar: this.acceptCookies,
 			headers: {
 				'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.48 Safari/537.36'
 			}

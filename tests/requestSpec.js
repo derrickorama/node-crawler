@@ -270,4 +270,31 @@ describe('Crawler', function () {
 		});
 		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/blank.pdf', false);
 	});
+
+	/*
+	| Cookies
+	*/
+
+	it('should support cookies by default', function (done) {
+		var crawler = new Crawler({
+			onPageCrawl: function (page, response) {
+				expect(response.request._jar).toBe(true);
+				done();
+			}
+		});
+		expect(crawler.acceptCookies).toBe(true);
+		crawler.queue('http://www.yahoo.com/', false);
+	});
+
+	it('should allow you to turn off support for cookies', function (done) {
+		var crawler = new Crawler({
+			onPageCrawl: function (page, response) {
+				expect(response.request._jar).toBe(false);
+				done();
+			},
+			acceptCookies: false
+		});
+		expect(crawler.acceptCookies).toBe(false);
+		crawler.queue(BASIC_LINK_PAGE, false);
+	});
 });
