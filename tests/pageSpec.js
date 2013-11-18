@@ -24,6 +24,11 @@ describe('Crawler page', function () {
 		expect(page.links.length).toBe(0);
 	});
 
+	it('should have a default type of text/html', function () {
+		var page = new Page();
+		expect(page.type).toBe('text/html');
+	});
+
 	it('should allow you to set a url property', function () {
 		var page = new Page('http://www.google.com/');
 		expect(page.url).toBe('http://www.google.com/');

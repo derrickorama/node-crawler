@@ -36,6 +36,7 @@ var Page = function (url) {
 	this.url = url || '';
 	this.urlData = urllib.parse(this.url);
 	this.html = '';
+	this.type = 'text/html';
 	this.$ = cheerio.load('');
 	this.links = [];
 };
@@ -45,7 +46,16 @@ Page.prototype = {
 		var page = this;
 
 		this.html = html || '';
-		this.$ = cheerio.load(this.html);
+
+		// Make sure this is a text file of some sort
+		if (this.type.indexOf('text/') > -1) {
+			// Cheerio can kill the process during parsing, make sure it doesn't
+			try {
+				this.$ = cheerio.load(this.html);
+			} catch (e) {
+				console.log('Cheerio parsing error: ' + this.url);
+			}
+		}
 
 		page.links = [];
 		this.$('a').each(function () {
@@ -67,6 +77,10 @@ Crawler.prototype = {
 			pageLinkData,
 			pageLinksLength;
 
+		// Update page.type
+		page.type = response.headers['content-type'].replace(/;.*/g, '').replace(/(^\s+|\s+$)/g, '');
+
+		// Update HTML
 		page.setHTML(body);
 
 		if (pageInfo.crawlLinks === true) {

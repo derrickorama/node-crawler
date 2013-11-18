@@ -206,4 +206,47 @@ describe('Crawler', function () {
 		crawler.queue('http://dropbox.com', false);
 	});
 
+	it('should handle cheerio parsing errors', function (done) {
+		// This should totally kill Jasmine if it's not handled
+		var crawler = new Crawler({
+			onDrain: function () {
+				done();
+			}
+		});
+		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/non-page.txt', false);
+	});
+
+	it('should set the MIME type for each type of page crawled', function (done) {
+		var crawler = new Crawler({
+			onPageCrawl: function (page) {
+				if (page.url.match(/\.pdf$/gi) !== null) {
+					expect(page.type).toBe('application/pdf');
+				}
+				if (page.url.match(/\.html$/gi) !== null) {
+					expect(page.type).toBe('text/html');
+				}
+				if (page.url.match(/\.txt$/gi) !== null) {
+					expect(page.type).toBe('text/plain');
+				}
+			},
+			onDrain: function () {
+				done();
+			}
+		});
+		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/blank.pdf', false);
+		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/basic-link-crawl.html', false);
+		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/plain-text.txt', false);
+	});
+
+	it('should not try to parse (cheerio) non-text MIME types', function (done) {
+		var crawler = new Crawler({
+			onPageCrawl: function (page, response, pagesCrawled) {
+				expect(page.$.html()).toBe('');
+			},
+			onDrain: function () {
+				done();
+			}
+		});
+		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/blank.pdf', false);
+	});
 });
