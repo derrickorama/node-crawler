@@ -220,7 +220,7 @@ describe('Crawler', function () {
 	it('should use the dummy user agent string by default for any request', function (done) {
 		var crawler = new Crawler({
 			onPageCrawl: function (page, response) {
-				expect(response.request.headers['User-Agent']).toBe('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.48 Safari/537.36');
+				expect(response.request.headers['User-Agent']).toBe('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
 				done();
 			}
 		});
@@ -278,7 +278,8 @@ describe('Crawler', function () {
 	it('should support cookies by default', function (done) {
 		var crawler = new Crawler({
 			onPageCrawl: function (page, response) {
-				expect(response.request._jar).toBe(true);
+				expect(_.isObject(response.request._jar)).toBe(true);
+				expect(response.request._jar.hasOwnProperty('cookies')).toBe(true);
 				done();
 			}
 		});

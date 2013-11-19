@@ -149,7 +149,7 @@ Crawler.prototype = {
 			method: method,
 			timeout: this.timeout,
 			strictSSL: this.strictSSL,
-			jar: this.acceptCookies,
+			jar: this.acceptCookies ? request.jar() : false,
 			headers: {
 				'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 			}
