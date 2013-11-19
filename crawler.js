@@ -80,7 +80,9 @@ Crawler.prototype = {
 			pageLinksLength;
 
 		// Update page.type
-		page.type = response.headers['content-type'].replace(/;.*/g, '').replace(/(^\s+|\s+$)/g, '');
+		if (typeof response === 'object' && typeof response.headers === 'object' && response.headers.hasOwnProperty('content-type') === true) {
+			page.type = response.headers['content-type'].replace(/;.*/g, '').replace(/(^\s+|\s+$)/g, '');
+		}
 
 		// Update HTML
 		page.setHTML(body);
