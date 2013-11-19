@@ -151,7 +151,7 @@ Crawler.prototype = {
 			strictSSL: this.strictSSL,
 			jar: this.acceptCookies,
 			headers: {
-				'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.48 Safari/537.36'
+				'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 			}
 		}, function (error, response, body) {
 			// If the crawler was killed before this request was ready, finish the process
