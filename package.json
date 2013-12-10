@@ -1,11 +1,12 @@
 {
     "name": "node-crawler",
     "description": "A web crawler module for Node.js.",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "author": "Derrick Gall",
     "engines": ["node"],
     "devDependencies": {
         "jasmine-node": "1.11.0",
+        "optimist": "0.6.0",
         "underscore": "1.5.2"
     },
     "dependencies": {

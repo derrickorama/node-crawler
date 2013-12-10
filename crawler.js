@@ -133,8 +133,8 @@ Crawler.prototype = {
 		}
 
 		// If a 405 was returned when requesting the HEAD, try GET instead
-		if (response.statusCode === 405 && response.req.method === 'HEAD') {
-			pageInfo.method = 'get';
+		if ((response.statusCode === 405 || response.statusCode === 403) && response.req.method === 'HEAD') {
+			pageInfo.method = 'GET';
 			this._crawlPage(pageInfo, callback);
 			return false;
 		}
@@ -198,7 +198,7 @@ Crawler.prototype = {
 		this._pages[url] = {
 			page: new Page(url),
 			crawlLinks: crawlLinksOnPage === false ? false : true,
-			method: useHEAD === true ? 'head' : 'get'
+			method: useHEAD === true ? 'HEAD' : 'GET'
 		};
 
 		this._queue.push(this._pages[url], function (callback, args) {

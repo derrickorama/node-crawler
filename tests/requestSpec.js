@@ -195,7 +195,7 @@ describe('Crawler', function () {
 			Crawler.prototype._crawlPage.apply(crawler, arguments);
 		};
 
-		crawler.queue('http://dropbox.com/', false);
+		crawler.queue('https://dropbox.com/', false);
 	});
 
 	it('should retry a failed page if it fails and the number of retries is specified', function (done) {
@@ -214,8 +214,8 @@ describe('Crawler', function () {
 			Crawler.prototype._crawlPage.apply(crawler, arguments);
 		};
 
-		crawler.queue('http://dropbox.com/trololololo', false);
-	});
+		crawler.queue('https://dropbox.com/trololololo', false);
+	}, 10000);
 
 	it('should use the dummy user agent string by default for any request', function (done) {
 		var crawler = new Crawler({
@@ -224,7 +224,7 @@ describe('Crawler', function () {
 				done();
 			}
 		});
-		crawler.queue('http://dropbox.com', false);
+		crawler.queue('https://dropbox.com', false);
 	});
 
 	it('should handle cheerio parsing errors', function (done) {

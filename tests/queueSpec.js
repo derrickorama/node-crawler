@@ -114,7 +114,7 @@ describe('Crawler queue', function () {
 				done();
 			}
 		});
-		crawler.queue('http://dropbox.com');
+		crawler.queue('https://dropbox.com');
 
 		setTimeout(function () {
 			pagesCrawled = 0;
