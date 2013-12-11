@@ -133,7 +133,10 @@ Crawler.prototype = {
 		}
 
 		// If a 405 was returned when requesting the HEAD, try GET instead
-		if ((response.statusCode === 405 || response.statusCode === 403) && response.req.method === 'HEAD') {
+		if (
+			((response.statusCode === 405 || response.statusCode === 403) && response.req.method === 'HEAD') ||
+			(error && error.code && error.code === 'HPE_INVALID_CONSTANT')
+		) {
 			pageInfo.method = 'GET';
 			this._crawlPage(pageInfo, callback);
 			return false;
