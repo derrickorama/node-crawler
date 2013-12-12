@@ -1,13 +1,17 @@
 var _ = require('underscore');
 var Crawler = require('../crawler.js').Crawler;
 
-describe('Crawler', function () {
+describe('Crawler requests feature', function () {
 
 	var BASIC_LINK_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/basic-link-crawl.html',
 		DENY_HEAD_METHOD_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/deny-head-method.html',
 		EXTERNAL_URL_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/external-link-page.html',
 		NON_PAGE_URLS_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/non-page-urls.html',
 		RELATIVE_URL_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/relative-link-page.html';
+
+	/*
+	| Defaults
+	*/
 
 	it('should have a default timeout of 60000', function () {
 		var crawler = new Crawler();
@@ -23,6 +27,25 @@ describe('Crawler', function () {
 		expect(crawler.strictSSL).toBe(false);
 		crawler.queue(BASIC_LINK_PAGE, false);
 	});
+
+	it('should have a default retries property of 0', function () {
+		var crawler = new Crawler();
+		expect(crawler.retries).toBe(0);
+	});
+
+	it('should use the dummy user agent string by default for any request', function (done) {
+		var crawler = new Crawler({
+			onPageCrawl: function (page, response) {
+				expect(response.request.headers['User-Agent']).toBe('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
+				done();
+			}
+		});
+		crawler.queue('https://dropbox.com', false);
+	});
+
+	/*
+	| Settings
+	*/
 
 	it('should change the timeout of a request based on the timeout specified', function (done) {
 		var crawler = new Crawler({
@@ -62,6 +85,15 @@ describe('Crawler', function () {
 		expect(crawler.strictSSL).toBe(true);
 		crawler.queue(BASIC_LINK_PAGE, false);
 	});
+
+	it('should change number of retries if specified', function () {
+		var crawler = new Crawler({ retries: 1 });
+		expect(crawler.retries).toBe(1);
+	});
+
+	/*
+	| Link crawling
+	*/
 
 	it('should find and crawl URLs found on the pages in the queue', function (done) {
 		var pagesCrawled = 0;
@@ -111,6 +143,30 @@ describe('Crawler', function () {
 		crawler.queue(RELATIVE_URL_PAGE);
 	});
 
+	it('should consider URLs that have a hash tag with an already crawled URLs as new pages', function (done) {
+		var pagesCrawled = 0;
+
+		var crawler = new Crawler({
+			onPageCrawl: function (pageInfo) {
+				pagesCrawled++;
+			},
+			onError: function (pageInfo) {
+				pagesCrawled++;
+			},
+			onDrain: function () {
+				expect(pagesCrawled).toBe(1);
+				done();
+			},
+			crawlExternal: true
+		});
+
+		crawler.queue(NON_PAGE_URLS_PAGE);
+	});
+
+	/*
+	| Request failures
+	*/
+
 	it('should try getting the HEAD of external links if specified to crawl external links', function (done) {
 		var pagesCrawled = 0;
 
@@ -147,36 +203,6 @@ describe('Crawler', function () {
 		});
 
 		crawler.queue(DENY_HEAD_METHOD_PAGE);
-	});
-
-	it('should ignore URLs if they are non-page URIs or hashes without a URL', function (done) {
-		var pagesCrawled = 0;
-
-		var crawler = new Crawler({
-			onPageCrawl: function () {
-				pagesCrawled++;
-			},
-			onError: function (page, response) {
-				pagesCrawled++;
-			},
-			onDrain: function () {
-				expect(pagesCrawled).toBe(1);
-				done();
-			},
-			crawlExternal: true
-		});
-
-		crawler.queue(NON_PAGE_URLS_PAGE);
-	});
-
-	it('should have a default retries property of 0', function () {
-		var crawler = new Crawler();
-		expect(crawler.retries).toBe(0);
-	});
-
-	it('should change number of retries if specified', function () {
-		var crawler = new Crawler({ retries: 1 });
-		expect(crawler.retries).toBe(1);
 	});
 
 	it('should not retry a page if it does not fail and the number of retries is specified', function (done) {
@@ -217,15 +243,9 @@ describe('Crawler', function () {
 		crawler.queue('https://dropbox.com/trololololo', false);
 	}, 10000);
 
-	it('should use the dummy user agent string by default for any request', function (done) {
-		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
-				expect(response.request.headers['User-Agent']).toBe('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
-				done();
-			}
-		});
-		crawler.queue('https://dropbox.com', false);
-	});
+	/*
+	| Content parsing
+	*/
 
 	it('should handle cheerio parsing errors', function (done) {
 		// This should totally kill Jasmine if it's not handled

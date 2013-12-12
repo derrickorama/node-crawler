@@ -3,6 +3,10 @@ var Page = require('../crawler.js').Page;
 
 describe('Crawler page', function () {
 
+	/*
+	| Defaults
+	*/
+
 	it('should set the url to "" by default', function () {
 		var page = new Page();
 		expect(page.url).toBe('');
@@ -29,6 +33,10 @@ describe('Crawler page', function () {
 		expect(page.type).toBe('text/html');
 	});
 
+	/*
+	| URL setting
+	*/
+
 	it('should allow you to set a url property', function () {
 		var page = new Page('http://www.google.com/');
 		expect(page.url).toBe('http://www.google.com/');
@@ -43,6 +51,16 @@ describe('Crawler page', function () {
 		expect(page.urlData.path).toBe('/');
 		expect(page.urlData.href).toBe('http://www.google.com/');
 	});
+
+	it('should not include the has when setting a URL', function () {
+		var page = new Page('http://www.google.com/#hash');
+		expect(page.url).toBe('http://www.google.com/');
+		expect(page.urlData.hash).toBe('#hash');
+	});
+
+	/*
+	| HTML setting
+	*/
 
 	it('should allow you to set the HTML of a page', function () {
 		var page = new Page('http://www.google.com/');
@@ -62,13 +80,9 @@ describe('Crawler page', function () {
 		page.setHTML('$$&($#*(#*$@($</html><div><div>');
 	});
 
-	it('should save all links on a page', function () {
-		var page = new Page('http://www.google.com/');
-		page.setHTML('<a href="http://google.com">link</a>');
-
-		expect(page.links.length).toBe(1);
-		expect(page.links.indexOf('http://google.com/')).toBeGreaterThan(-1);
-	});
+	/*
+	| Link parsing
+	*/
 
 	it('should clear all links when new HTML is set', function () {
 		var page = new Page('http://www.google.com/');
@@ -78,6 +92,31 @@ describe('Crawler page', function () {
 
 		expect(page.links.length).toBe(1);
 		expect(page.links.indexOf('http://google.com/')).toBeGreaterThan(-1);
+	});
+
+	it('should save all links on a page', function () {
+		var page = new Page('http://www.google.com/');
+		page.setHTML('<a href="http://google.com">link</a>');
+
+		expect(page.links.length).toBe(1);
+		expect(page.links.indexOf('http://google.com/')).toBeGreaterThan(-1);
+	});
+
+	it('should save relative links as a full, resolved path', function () {
+		var page = new Page('http://www.google.com/');
+		page.setHTML('<a href="/I-am-relative">link</a>');
+		expect(page.links.length).toBe(1);
+		expect(page.links.indexOf('http://www.google.com/I-am-relative')).toBeGreaterThan(-1);
+
+		page = new Page('http://www.google.com/section/');
+		page.setHTML('<a href="I-am-relative">link</a>');
+		expect(page.links.length).toBe(1);
+		expect(page.links.indexOf('http://www.google.com/section/I-am-relative')).toBeGreaterThan(-1);
+
+		page = new Page('http://www.google.com/sibling');
+		page.setHTML('<a href="I-am-relative">link</a>');
+		expect(page.links.length).toBe(1);
+		expect(page.links.indexOf('http://www.google.com/I-am-relative')).toBeGreaterThan(-1);
 	});
 
 });

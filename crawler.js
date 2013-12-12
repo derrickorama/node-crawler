@@ -41,6 +41,9 @@ var Page = function (url) {
 	this.type = 'text/html';
 	this.$ = cheerio.load('');
 	this.links = [];
+
+	// Remove hash from URL
+	this.url = this.url.replace(/#.*/gi, '');
 };
 
 Page.prototype = {
@@ -63,8 +66,7 @@ Page.prototype = {
 		this.$('a').each(function () {
 			var href = this.attr('href');
 			if (href) {
-				var url = urllib.format(urllib.parse(href));
-				page.links.push(url);
+				page.links.push(urllib.resolve(page.url, href));
 			}
 		});
 	}
@@ -90,38 +92,39 @@ Crawler.prototype = {
 		if (pageInfo.crawlLinks === true) {
 			pageLinksLength = page.links.length;
 			for (i = 0; i < pageLinksLength; i++) {
-				pageLink = page.links[i];
-				pageLinkData = urllib.parse(pageLink);
+				pageLink = new Page(urllib.resolve(page.url, page.links[i]));
 
 				// Ignore mailto: links
 				if (
-					pageLinkData.protocol === 'mailto:' ||
-					pageLinkData.protocol === 'javascript:' ||
-					pageLinkData.protocol === 'tel:' ||
-					pageLinkData.path === null
+					pageLink.urlData.protocol === 'mailto:' ||
+					pageLink.urlData.protocol === 'javascript:' ||
+					pageLink.urlData.protocol === 'tel:' ||
+					pageLink.urlData.path === null
 				) {
 					continue;
 				}
 
 				// Make sure we're crawling a link on the same domain
-				if (/^\w+\:\/\//.test(pageLink) === true && pageLink.indexOf(page.urlData.protocol + '//' + page.urlData.host) !== 0) {
-					
+				if (
+					/^\w+\:\/\//.test(pageLink.url) === true &&
+					(
+						pageLink.urlData.protocol !== page.urlData.protocol ||
+						pageLink.urlData.host !== page.urlData.host
+					)
+				) {
 					// Don't crawl external URLs if external URL crawling is not specified
 					if (crawler._crawlExternal !== true) {
 						continue;
 					}
 
-					crawler.queue(pageLink, false, true);
+					// Crawl external URL
+					crawler.queue(pageLink.url, false, true);
 
 					continue;
 				}
 
-				// If this is a relative URL, resolve the path
-				if (pageLinkData.host === null) {
-					pageLink = urllib.resolve(page.url, pageLink);
-				}
-
-				crawler.queue(pageLink);
+				// Crawl same-domain URL
+				crawler.queue(pageLink.url);
 			}
 		}
 
