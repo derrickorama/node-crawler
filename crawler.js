@@ -138,7 +138,8 @@ Crawler.prototype = {
 		// If a 405 was returned when requesting the HEAD, try GET instead
 		if (
 			((response.statusCode === 405 || response.statusCode === 403) && response.req.method === 'HEAD') ||
-			(error && error.code && error.code === 'HPE_INVALID_CONSTANT')
+            // TODO: write tests for HTTP parsing errors (below)
+			(error && error.code && (error.code === 'HPE_INVALID_CONSTANT' || error.code === 'HPE_INVALID_HEADER_TOKEN'))
 		) {
 			pageInfo.method = 'GET';
 			this._crawlPage(pageInfo, callback);
