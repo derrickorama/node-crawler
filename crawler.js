@@ -148,6 +148,15 @@ Crawler.prototype = {
 
 		callback('onError', [pageInfo.page, error, response]);
 	},
+	_wasCrawled: function (url) {
+		var href = urllib.parse(url).href;
+
+		if (this._pages.hasOwnProperty(href) === true) {
+			return true;
+		}
+
+		return false;
+	},
 	_crawlPage: function (pageInfo, callback) {
 		var crawler = this,
 			page = pageInfo.page,
@@ -168,6 +177,9 @@ Crawler.prototype = {
 				callback();
 				return false;
 			}
+
+			// Check if page was a redirect
+
 
 			if (error === null && response.statusCode === 200) {
 				crawler._responseSuccess(pageInfo, response, body, callback);
@@ -197,24 +209,27 @@ Crawler.prototype = {
 
 		url = urlData.href;
 
-		if (this._pages.hasOwnProperty(url) === true) {
+		// This stops pages from being crawled again
+		if (this._wasCrawled(url) === true) {
 			return false;
 		}
-
-		// This stops pages from being crawled again
+		
 		this._pages[url] = {
 			page: new Page(url),
 			crawlLinks: crawlLinksOnPage === false ? false : true,
 			method: useHEAD === true ? 'HEAD' : 'GET'
 		};
 
-		this._queue.push(this._pages[url], function (callback, args) {
-			if (callback !== undefined) {
-				crawler[callback].apply(this, args);
-			}
+		this._queue.push(this._pages[url], function () {
+			crawler._asyncQueueCallback.apply(crawler, arguments);
 		});
 
 		return true;
+	},
+	_asyncQueueCallback: function (callback, args) {
+		if (callback !== undefined) {
+			this[callback].apply(this, args);
+		}
 	},
 	kill: function () {
 		this._killed = true;

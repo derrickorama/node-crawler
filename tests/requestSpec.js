@@ -1,3 +1,4 @@
+var urllib = require('url');
 var _ = require('underscore');
 var Crawler = require('../crawler.js').Crawler;
 
@@ -89,6 +90,39 @@ describe('Crawler requests feature', function () {
 	it('should change number of retries if specified', function () {
 		var crawler = new Crawler({ retries: 1 });
 		expect(crawler.retries).toBe(1);
+	});
+
+	/*
+	| _wasCrawled method
+	*/
+	describe('_wasCrawled method', function () {
+		var crawler;
+
+		beforeEach(function () {
+			crawler = new Crawler();
+		});
+
+		it('exists', function () {
+			expect(crawler._wasCrawled instanceof Function).toBe(true);
+		});
+
+		it('calls the parse method of the "url" module', function () {
+			var parseSpy = spyOn(urllib, 'parse').andCallThrough();
+			crawler._wasCrawled('http://www.google.com');
+			expect(parseSpy).toHaveBeenCalledWith('http://www.google.com');
+		});
+
+		it('returns false if the URL doesn\'t exist in crawler._pages object', function () {
+			var wasCrawled = crawler._wasCrawled('http://www.google.com');
+			expect(wasCrawled).toBe(false);
+		});
+
+		it('returns true if the URL already exist in crawler._pages object', function () {
+			crawler._pages = { 'http://www.google.com/': true };
+			var wasCrawled = crawler._wasCrawled('http://www.google.com/');
+			expect(wasCrawled).toBe(true);
+		});
+		
 	});
 
 	/*
