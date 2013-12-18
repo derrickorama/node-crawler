@@ -157,12 +157,13 @@ Crawler.prototype = {
 
 		return false;
 	},
-	_crawlPage: function (pageInfo, callback) {
+	_request: request,
+	_crawlPage: function (pageInfo, finishCallback) {
 		var crawler = this,
 			page = pageInfo.page,
 			method = pageInfo.method;
 
-		request({
+		this._request({
 			url: page.url,
 			method: method,
 			timeout: this.timeout,
@@ -172,36 +173,39 @@ Crawler.prototype = {
 				'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 			}
 		}, function (error, response, body) {
-			// If the crawler was killed before this request was ready, finish the process
-			if (crawler._killed === true) {
-				callback();
-				return false;
-			}
+			crawler._onResponse(pageInfo, error, response, body, finishCallback);
+		});
+	},
+	_onResponse: function (pageInfo, error, response, body, finishCallback) {
+		// If the crawler was killed before this request was ready, finish the process
+		if (this._killed === true) {
+			finishCallback();
+			return false;
+		}
 
-			// Check if page was a redirect
+		// Check if page was a redirect
 
 
-			if (error === null && response.statusCode === 200) {
-				crawler._responseSuccess(pageInfo, response, body, callback);
-			} else {
-				// Try to load the page again if more than 0 retries are specified
-				if (crawler.retries > 0) {
-					if (pageInfo._retries === undefined) {
-						pageInfo._retries = 0;
-					}
-
-					// If retries haven't reached the maximum retries, retry the request
-					if (pageInfo._retries < crawler.retries) {
-						pageInfo._retries++;
-						crawler._crawlPage(pageInfo, callback);
-						return false;
-					}
+		if (error === null && response.statusCode === 200) {
+			this._responseSuccess(pageInfo, response, body, finishCallback);
+		} else {
+			// Try to load the page again if more than 0 retries are specified
+			if (this.retries > 0) {
+				if (pageInfo._retries === undefined) {
+					pageInfo._retries = 0;
 				}
 
-				// This page is bad, send error
-				crawler._responseError(pageInfo, response, error, callback);
+				// If retries haven't reached the maximum retries, retry the request
+				if (pageInfo._retries < this.retries) {
+					pageInfo._retries++;
+					this._crawlPage(pageInfo, finishCallback);
+					return false;
+				}
 			}
-		});
+
+			// This page is bad, send error
+			this._responseError(pageInfo, response, error, finishCallback);
+		}
 	},
 	queue: function (url, crawlLinksOnPage, useHEAD) {
 		var crawler = this,

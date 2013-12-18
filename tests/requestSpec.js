@@ -239,44 +239,6 @@ describe('Crawler requests feature', function () {
 		crawler.queue(DENY_HEAD_METHOD_PAGE);
 	});
 
-	it('should not retry a page if it does not fail and the number of retries is specified', function (done) {
-		var requests = 0;
-
-		var crawler = new Crawler({
-			retries: 1,
-			onDrain: function () {
-				expect(requests).toBe(1);
-				done();
-			}
-		});
-
-		crawler._crawlPage = function () {
-			requests++;
-			Crawler.prototype._crawlPage.apply(crawler, arguments);
-		};
-
-		crawler.queue('https://dropbox.com/', false);
-	});
-
-	it('should retry a failed page if it fails and the number of retries is specified', function (done) {
-		var requests = 0;
-
-		var crawler = new Crawler({
-			retries: 1,
-			onDrain: function () {
-				expect(requests).toBe(2);
-				done();
-			}
-		});
-
-		crawler._crawlPage = function () {
-			requests++;
-			Crawler.prototype._crawlPage.apply(crawler, arguments);
-		};
-
-		crawler.queue('https://dropbox.com/trololololo', false);
-	}, 10000);
-
 	/*
 	| Content parsing
 	*/
@@ -323,34 +285,6 @@ describe('Crawler requests feature', function () {
 			}
 		});
 		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/blank.pdf', false);
-	});
-
-	/*
-	| Cookies
-	*/
-
-	it('should support cookies by default', function (done) {
-		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
-				expect(_.isObject(response.request._jar)).toBe(true);
-				expect(response.request._jar.hasOwnProperty('cookies')).toBe(true);
-				done();
-			}
-		});
-		expect(crawler.acceptCookies).toBe(true);
-		crawler.queue('http://www.yahoo.com/', false);
-	});
-
-	it('should allow you to turn off support for cookies', function (done) {
-		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
-				expect(response.request._jar).toBe(false);
-				done();
-			},
-			acceptCookies: false
-		});
-		expect(crawler.acceptCookies).toBe(false);
-		crawler.queue(BASIC_LINK_PAGE, false);
 	});
 
 });
