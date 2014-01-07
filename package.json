@@ -1,23 +1,27 @@
 {
-    "name": "node-crawler",
-    "description": "A web crawler module for Node.js.",
-    "version": "0.4.2",
-    "author": "Derrick Gall",
-    "engines": ["node"],
-    "devDependencies": {
-        "jasmine-node": "1.11.0",
-        "optimist": "0.6.0",
-        "underscore": "1.5.2"
-    },
-    "dependencies": {
-        "async": "0.2.9",
-        "cheerio": "0.12.4",
-        "request": "2.27.0"
-    },
-    "license": "MIT",
-    "main": "./crawler",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/derrickorama/node-crawler.git"
-    }
+  "name": "node-crawler",
+  "description": "A web crawler module for Node.js.",
+  "version": "0.4.2",
+  "author": "Derrick Gall",
+  "engines": [
+    "node"
+  ],
+  "devDependencies": {
+    "jasmine-node": "1.11.0",
+    "optimist": "0.6.0",
+    "underscore": "1.5.2",
+    "grunt": "~0.4.2",
+    "grunt-contrib-jshint": "~0.8.0"
+  },
+  "dependencies": {
+    "async": "0.2.9",
+    "cheerio": "0.12.4",
+    "request": "2.27.0"
+  },
+  "license": "MIT",
+  "main": "./crawler",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/derrickorama/node-crawler.git"
+  }
 }

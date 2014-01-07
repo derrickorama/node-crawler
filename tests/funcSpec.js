@@ -5,7 +5,7 @@ describe('Crawler queue', function () {
 
 	it('should crawl a URL when one is queued', function (done) {
 		var crawler = new Crawler({
-			onPageCrawl: function (response, data) {
+			onPageCrawl: function (response) {
 				expect(response.url).toBe('http://www.google.com/');
 				done();
 			}
@@ -66,5 +66,20 @@ describe('Crawler cookie support', function () {
 		expect(crawler.acceptCookies).toBe(false);
 		crawler.queue(BASIC_LINK_PAGE, false);
 	});
+
+describe('Requests', function () {
+
+	it('should support HTTPS urls', function (done) {
+		var crawler = new Crawler({
+			onPageCrawl: function (page) {
+				expect(page.url).toBe(BASIC_LINK_PAGE);
+				done();
+			}
+		});
+
+		crawler.queue(BASIC_LINK_PAGE, false);
+	});
+
+});
 
 });

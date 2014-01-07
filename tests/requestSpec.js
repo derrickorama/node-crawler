@@ -1,14 +1,22 @@
 var urllib = require('url');
-var _ = require('underscore');
 var Crawler = require('../crawler.js').Crawler;
 
 describe('Crawler requests feature', function () {
 
 	var BASIC_LINK_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/basic-link-crawl.html',
-		DENY_HEAD_METHOD_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/deny-head-method.html',
 		EXTERNAL_URL_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/external-link-page.html',
 		NON_PAGE_URLS_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/non-page-urls.html',
 		RELATIVE_URL_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/relative-link-page.html';
+
+	var mockRequest = function (params, callback) {
+		if (params.method === 'HEAD') {
+			// Deny HEAD requests
+			callback(null, { statusCode: 403, req: { method: 'HEAD' } }, '');
+		} else {
+			// Allow other requests
+			callback(null, { statusCode: 200, req: { method: 'GET' } }, '');
+		}
+	};
 
 	/*
 	| Defaults
@@ -19,14 +27,9 @@ describe('Crawler requests feature', function () {
 		expect(crawler.timeout).toBe(60000);
 	});
 
-	it('should not use strict ssl by default', function (done) {
-		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
-				done();
-			}
-		});
+	it('should not use strict ssl by default', function () {
+		var crawler = new Crawler();
 		expect(crawler.strictSSL).toBe(false);
-		crawler.queue(BASIC_LINK_PAGE, false);
 	});
 
 	it('should have a default retries property of 0', function () {
@@ -65,20 +68,9 @@ describe('Crawler requests feature', function () {
 		crawler.queue('http://dropbox.com', false);
 	});
 
-	it('should support HTTPS urls', function (done) {
-		var crawler = new Crawler({
-			onPageCrawl: function (page) {
-				expect(page.url).toBe(BASIC_LINK_PAGE);
-				done();
-			}
-		});
-
-		crawler.queue(BASIC_LINK_PAGE, false);
-	});
-
 	it('should allow you to turn on strict ssl', function (done) {
 		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
+			onPageCrawl: function () {
 				done();
 			},
 			strictSSL: true
@@ -90,39 +82,6 @@ describe('Crawler requests feature', function () {
 	it('should change number of retries if specified', function () {
 		var crawler = new Crawler({ retries: 1 });
 		expect(crawler.retries).toBe(1);
-	});
-
-	/*
-	| _wasCrawled method
-	*/
-	describe('_wasCrawled method', function () {
-		var crawler;
-
-		beforeEach(function () {
-			crawler = new Crawler();
-		});
-
-		it('exists', function () {
-			expect(crawler._wasCrawled instanceof Function).toBe(true);
-		});
-
-		it('calls the parse method of the "url" module', function () {
-			var parseSpy = spyOn(urllib, 'parse').andCallThrough();
-			crawler._wasCrawled('http://www.google.com');
-			expect(parseSpy).toHaveBeenCalledWith('http://www.google.com');
-		});
-
-		it('returns false if the URL doesn\'t exist in crawler._pages object', function () {
-			var wasCrawled = crawler._wasCrawled('http://www.google.com');
-			expect(wasCrawled).toBe(false);
-		});
-
-		it('returns true if the URL already exist in crawler._pages object', function () {
-			crawler._pages = { 'http://www.google.com/': true };
-			var wasCrawled = crawler._wasCrawled('http://www.google.com/');
-			expect(wasCrawled).toBe(true);
-		});
-		
 	});
 
 	/*
@@ -149,7 +108,7 @@ describe('Crawler requests feature', function () {
 		var pagesCrawled = 0;
 
 		var crawler = new Crawler({
-			onPageCrawl: function (response, data) {
+			onPageCrawl: function () {
 				pagesCrawled++;
 			},
 			onDrain: function () {
@@ -165,7 +124,7 @@ describe('Crawler requests feature', function () {
 		var pagesCrawled = 0;
 
 		var crawler = new Crawler({
-			onPageCrawl: function (response, data) {
+			onPageCrawl: function () {
 				pagesCrawled++;
 			},
 			onDrain: function () {
@@ -181,10 +140,10 @@ describe('Crawler requests feature', function () {
 		var pagesCrawled = 0;
 
 		var crawler = new Crawler({
-			onPageCrawl: function (pageInfo) {
+			onPageCrawl: function () {
 				pagesCrawled++;
 			},
-			onError: function (pageInfo) {
+			onError: function () {
 				pagesCrawled++;
 			},
 			onDrain: function () {
@@ -223,20 +182,21 @@ describe('Crawler requests feature', function () {
 	});
 
 	it('should attempt a GET request if a HEAD request is rejected', function (done) {
-		var pagesCrawled = 0;
+		var pageCrawled = false;
 
 		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
-				pagesCrawled++;
+			onPageCrawl: function () {
+				pageCrawled = true;
 			},
 			onDrain: function () {
-				expect(pagesCrawled).toBe(2);
+				expect(pageCrawled).toBe(true);
 				done();
-			},
-			crawlExternal: true
+			}
 		});
 
-		crawler.queue(DENY_HEAD_METHOD_PAGE);
+		crawler._request = mockRequest;
+
+		crawler.queue('https://www.google.com/', false, true);
 	});
 
 	/*
@@ -277,7 +237,7 @@ describe('Crawler requests feature', function () {
 
 	it('should not try to parse (cheerio) non-text MIME types', function (done) {
 		var crawler = new Crawler({
-			onPageCrawl: function (page, response, pagesCrawled) {
+			onPageCrawl: function (page) {
 				expect(page.$.html()).toBe('');
 			},
 			onDrain: function () {
@@ -287,4 +247,46 @@ describe('Crawler requests feature', function () {
 		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/blank.pdf', false);
 	});
 
+});
+
+/*
+| _wasCrawled method
+*/
+describe('Crawler._wasCrawled method', function () {
+	var crawler;
+
+	beforeEach(function () {
+		crawler = new Crawler();
+	});
+
+	it('exists', function () {
+		expect(crawler._wasCrawled instanceof Function).toBe(true);
+	});
+
+	it('calls the parse method of the "url" module', function () {
+		var parseSpy = spyOn(urllib, 'parse').andCallThrough();
+		crawler._wasCrawled('http://www.google.com');
+		expect(parseSpy).toHaveBeenCalledWith('http://www.google.com');
+	});
+
+	it('returns false if the URL doesn\'t exist in crawler._pages object', function () {
+		var wasCrawled = crawler._wasCrawled('http://www.google.com');
+		expect(wasCrawled).toBe(false);
+	});
+
+	it('returns true if the URL already exist in crawler._pages object', function () {
+		crawler._pages = { 'http://www.google.com/': true };
+		var wasCrawled = crawler._wasCrawled('http://www.google.com/');
+		expect(wasCrawled).toBe(true);
+	});
+
+	it('considers non-strings as empty strings', function () {
+		// Note: these would throw errors usuall
+		crawler._wasCrawled(null);
+		crawler._wasCrawled(undefined);
+		crawler._wasCrawled(2);
+		crawler._wasCrawled([]);
+		crawler._wasCrawled({});
+	});
+	
 });

@@ -24,6 +24,11 @@ describe('Crawler callbacks feature', function () {
 		expect(crawler.onError.toString()).toBe('function () {}');
 	});
 
+	it('should have an empty onRedirect function by default', function () {
+		var crawler = new Crawler();
+		expect(crawler.onRedirect.toString()).toBe('function () {}');
+	});
+
 	/*
 	| Settings
 	*/
@@ -58,6 +63,16 @@ describe('Crawler callbacks feature', function () {
 		expect(crawler.onError()).toBe(true);
 	});
 
+	it('should accept an onRedirect callback', function () {
+		var crawler = new Crawler({
+			onRedirect: function () {
+				return true;
+			}
+		});
+
+		expect(crawler.onRedirect()).toBe(true);
+	});
+
 	/*
 	| Callback execution
 	*/
@@ -90,7 +105,7 @@ describe('Crawler callbacks feature', function () {
 		var pagesCrawled = 0;
 
 		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
+			onPageCrawl: function () {
 				pagesCrawled++;
 			},
 			onDrain: function () {
@@ -107,7 +122,7 @@ describe('Crawler callbacks feature', function () {
 		var pagesCrawled = 0;
 
 		var crawler = new Crawler({
-			onError: function (page, response) {
+			onError: function () {
 				pagesCrawled++;
 			},
 			onDrain: function () {
@@ -124,7 +139,7 @@ describe('Crawler callbacks feature', function () {
 		var pagesCrawled = 0;
 
 		var crawler = new Crawler({
-			onError: function (page, response) {
+			onError: function () {
 				pagesCrawled++;
 			},
 			onDrain: function () {

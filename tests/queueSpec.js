@@ -1,5 +1,4 @@
 var urllib = require('url');
-var async = require('async');
 var Crawler = require('../crawler.js').Crawler;
 var Page = require('../crawler.js').Page;
 

@@ -1,6 +1,4 @@
 var async = require('async');
-var http = require('http');
-var https = require('https');
 var urllib = require('url');
 var cheerio = require('cheerio');
 var request = require('request');
@@ -25,6 +23,7 @@ var Crawler = function (params) {
 	this.onDrain = params.onDrain || function () {};
 	this.onError = params.onError || function () {};
 	this.onPageCrawl = params.onPageCrawl || function () {};
+	this.onRedirect = params.onRedirect || function () {};
 	this.retries = params.retries || 0;
 	this.strictSSL = params.strictSSL || false;
 	this.timeout = params.timeout || 60000;
@@ -48,6 +47,8 @@ var Page = function (url) {
 
 Page.prototype = {
 	setHTML: function (html) {
+		/*global console */
+
 		var page = this;
 
 		this.html = html || '';
@@ -74,11 +75,12 @@ Page.prototype = {
 
 Crawler.prototype = {
 	_responseSuccess: function (pageInfo, response, body, callback) {
+		/*jshint scripturl:true */
+
 		var crawler = this,
 			i,
 			page = pageInfo.page,
 			pageLink,
-			pageLinkData,
 			pageLinksLength;
 
 		// Update page.type
@@ -94,32 +96,25 @@ Crawler.prototype = {
 			for (i = 0; i < pageLinksLength; i++) {
 				pageLink = new Page(urllib.resolve(page.url, page.links[i]));
 
-				// Ignore mailto: links
+				// Ignore non-page links
 				if (
 					pageLink.urlData.protocol === 'mailto:' ||
 					pageLink.urlData.protocol === 'javascript:' ||
 					pageLink.urlData.protocol === 'tel:' ||
-					pageLink.urlData.path === null
+					pageLink.urlData.host === ''
 				) {
 					continue;
 				}
 
 				// Make sure we're crawling a link on the same domain
 				if (
-					/^\w+\:\/\//.test(pageLink.url) === true &&
-					(
-						pageLink.urlData.protocol !== page.urlData.protocol ||
-						pageLink.urlData.host !== page.urlData.host
-					)
+					pageLink.urlData.protocol !== page.urlData.protocol ||
+					pageLink.urlData.host !== page.urlData.host
 				) {
-					// Don't crawl external URLs if external URL crawling is not specified
-					if (crawler._crawlExternal !== true) {
-						continue;
+					// Crawl external URLs if external URL crawling is true
+					if (crawler._crawlExternal === true) {
+						crawler.queue(pageLink.url, false, true);
 					}
-
-					// Crawl external URL
-					crawler.queue(pageLink.url, false, true);
-
 					continue;
 				}
 
@@ -149,6 +144,14 @@ Crawler.prototype = {
 		callback('onError', [pageInfo.page, error, response]);
 	},
 	_wasCrawled: function (url) {
+		if (!url) {
+			url = '';
+		}
+
+		if (typeof url !== 'string') {
+			url = url.toString();
+		}
+
 		var href = urllib.parse(url).href;
 
 		if (this._pages.hasOwnProperty(href) === true) {
@@ -183,8 +186,37 @@ Crawler.prototype = {
 			return false;
 		}
 
-		// Check if page was a redirect
+		var finalURL,
+			wasRedirect = false,
+			wasCrawled;
 
+		// Make sure response is an object
+		if (!response || typeof response !== 'object') {
+			response = {};
+		}
+
+		// Store the final URL (in case there was a redirect)
+		if (typeof response.request === 'object') {
+			finalURL = response.request.href;
+		}
+
+		// Check if page was a redirect and save the redirect data
+		if (finalURL !== pageInfo.page.url) {
+			pageInfo.page.redirect = finalURL;
+			wasRedirect = true;
+		}
+
+		wasCrawled = this._wasCrawled(finalURL);
+
+		// Calls onRedirect callback
+		if (wasCrawled === true) {
+			this.onRedirect(pageInfo.page, response);
+		}
+
+		// Exits if page was already crawled/processed
+		if (wasRedirect === true && wasCrawled === true) {
+			return false;
+		}
 
 		if (error === null && response.statusCode === 200) {
 			this._responseSuccess(pageInfo, response, body, finishCallback);
@@ -214,7 +246,7 @@ Crawler.prototype = {
 		url = urlData.href;
 
 		// This stops pages from being crawled again
-		if (this._wasCrawled(url) === true) {
+		if (crawler._wasCrawled(url) === true) {
 			return false;
 		}
 		
