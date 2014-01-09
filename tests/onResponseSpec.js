@@ -79,6 +79,12 @@ describe('Crawler._onResponse method', function () {
 			expect(onRedirectSpy).toHaveBeenCalledWith(page, redirectedResponse);
 		});
 
+		it('calls onRedirect when a redirect occurs, even when final page wasn\'t already crawled', function () {
+			var onRedirectSpy = spyOn(crawler, 'onRedirect');
+			crawler._onResponse(pageInfo, true, redirectedResponse, '', function () {});
+			expect(onRedirectSpy).toHaveBeenCalledWith(page, redirectedResponse);
+		});
+
 		it('does not call _responseSuccess, _responseError, or _crawlPage if it redirects to a URL that was already crawled', function () {
 			var crawlPageSpy = spyOn(crawler, '_crawlPage');
 			crawler._pages = {
@@ -95,6 +101,21 @@ describe('Crawler._onResponse method', function () {
 
 		it('does not call onRedirect when a redirect does not occur', function () {
 			var onRedirectSpy = spyOn(crawler, 'onRedirect');
+			pageInfo = {
+				page: new Page('http://www.alreadycrawled.com/')
+			};
+			crawler._onResponse(pageInfo, null, redirectedResponse, '', function () {});
+			expect(onRedirectSpy).not.toHaveBeenCalled();
+		});
+
+		it('does not call onRedirect when a redirect does not occur, but page was already crawled', function () {
+			var onRedirectSpy = spyOn(crawler, 'onRedirect');
+			pageInfo = {
+				page: new Page('http://www.alreadycrawled.com/')
+			};
+			crawler._pages = {
+				'http://www.alreadycrawled.com/': true
+			};
 			crawler._onResponse(pageInfo, null, redirectedResponse, '', function () {});
 			expect(onRedirectSpy).not.toHaveBeenCalled();
 		});

@@ -209,7 +209,7 @@ Crawler.prototype = {
 		wasCrawled = this._wasCrawled(finalURL);
 
 		// Calls onRedirect callback
-		if (wasCrawled === true) {
+		if (wasRedirect === true) {
 			this.onRedirect(pageInfo.page, response);
 		}
 
