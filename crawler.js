@@ -201,7 +201,7 @@ Crawler.prototype = {
 		}
 
 		// Check if page was a redirect and save the redirect data
-		if (finalURL !== pageInfo.page.url) {
+		if (finalURL !== undefined && finalURL !== pageInfo.page.url) {
 			pageInfo.page.redirect = finalURL;
 			wasRedirect = true;
 		}
@@ -210,11 +210,12 @@ Crawler.prototype = {
 
 		// Calls onRedirect callback
 		if (wasRedirect === true) {
-			this.onRedirect(pageInfo.page, response);
+			this.onRedirect(pageInfo.page, response, wasCrawled);
 		}
 
 		// Exits if page was already crawled/processed
 		if (wasRedirect === true && wasCrawled === true) {
+			finishCallback();
 			return false;
 		}
 
