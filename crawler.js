@@ -33,13 +33,14 @@ var Crawler = function (params) {
 	};
 };
 
-var Page = function (url) {
+var Page = function (url, isExternal) {
 	this.url = url || '';
 	this.urlData = urllib.parse(this.url);
 	this.html = '';
 	this.type = 'text/html';
 	this.$ = cheerio.load('');
 	this.links = [];
+	this.isExternal = isExternal || false;
 
 	// Remove hash from URL
 	this.url = this.url.replace(/#.*/gi, '');
@@ -252,7 +253,7 @@ Crawler.prototype = {
 		}
 		
 		this._pages[url] = {
-			page: new Page(url),
+			page: new Page(url, useHEAD),
 			crawlLinks: crawlLinksOnPage === false ? false : true,
 			method: useHEAD === true ? 'HEAD' : 'GET'
 		};

@@ -33,6 +33,11 @@ describe('Crawler page', function () {
 		expect(page.type).toBe('text/html');
 	});
 
+	it('sets the isExternal property to false when nothing is supplied', function () {
+		var page = new Page();
+		expect(page.isExternal).toBe(false);
+	});
+
 	/*
 	| URL setting
 	*/
@@ -56,6 +61,15 @@ describe('Crawler page', function () {
 		var page = new Page('http://www.google.com/#hash');
 		expect(page.url).toBe('http://www.google.com/');
 		expect(page.urlData.hash).toBe('#hash');
+	});
+
+	/*
+	| isExternal setting
+	*/
+
+	it('sets the isExternal property of a page based on supplied isExternal argument', function () {
+		var page = new Page('http://www.google.com/', true);
+		expect(page.isExternal).toBe(true);
 	});
 
 	/*

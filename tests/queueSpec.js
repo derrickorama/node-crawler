@@ -81,6 +81,21 @@ describe('Crawler.queue method', function () {
                 expect(crawler._pages['http://www.google.com/'].method).toBe('HEAD');
             });
 
+            it('sets isExternal to true if using HEAD method', function () {
+                crawler.queue('http://www.google.com/', null, true);
+                expect(crawler._pages['http://www.google.com/'].page.isExternal).toBe(true);
+            });
+
+            it('sets isExternal to false if not HEAD method', function () {
+                crawler.queue('http://www.google.com/', null, false);
+                expect(crawler._pages['http://www.google.com/'].page.isExternal).toBe(false);
+            });
+
+            it('sets isExternal to false if HEAD method is not specified', function () {
+                crawler.queue('http://www.google.com/', null);
+                expect(crawler._pages['http://www.google.com/'].page.isExternal).toBe(false);
+            });
+
             it('sets method to GET if false specified', function () {
                 crawler.queue('http://www.google.com/', null, false);
                 expect(crawler._pages['http://www.google.com/'].method).toBe('GET');
