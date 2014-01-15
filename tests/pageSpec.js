@@ -19,7 +19,7 @@ describe('Crawler page', function () {
 
 	it('should have an empty DOM by default', function () {
 		var page = new Page();
-		expect(page.$.hasOwnProperty('_root')).toBe(true);
+		expect(page.dom().hasOwnProperty('_root')).toBe(true);
 	});
 
 	it('should have an empty array of links by default', function () {
@@ -85,8 +85,8 @@ describe('Crawler page', function () {
 	it('should load the HTML into a DOM-like environment (like jQuery)', function () {
 		var page = new Page('http://www.google.com/');
 		page.setHTML('<html><div id="myID">the text</div></html>');
-		expect(_.isObject(page.$)).toBe(true);
-		expect(page.$('#myID').length).toBe(1);
+		expect(_.isObject(page.dom())).toBe(true);
+		expect(page.dom()('#myID').length).toBe(1);
 	});
 
 	it('should gracefully handle DOM parsing errors', function () {

@@ -38,7 +38,6 @@ var Page = function (url, isExternal) {
 	this.urlData = urllib.parse(this.url);
 	this.html = '';
 	this.type = 'text/html';
-	this.$ = cheerio.load('');
 	this.links = [];
 	this.isExternal = isExternal || false;
 
@@ -47,6 +46,25 @@ var Page = function (url, isExternal) {
 };
 
 Page.prototype = {
+	dom: function () {
+		var $;
+
+		// Make sure this is a text file of some sort
+		if (this.type.indexOf('text/') > -1) {
+			// Cheerio can kill the process during parsing, make sure it doesn't
+			try {
+				$ = cheerio.load(this.html);
+			} catch (e) {
+				console.log('Cheerio parsing error: ' + this.url);
+			}
+		}
+
+		if ($ === undefined) {
+			$ = cheerio.load('');
+		}
+
+		return $;
+	},
 	setHTML: function (html) {
 		/*global console */
 
@@ -54,18 +72,8 @@ Page.prototype = {
 
 		this.html = html || '';
 
-		// Make sure this is a text file of some sort
-		if (this.type.indexOf('text/') > -1) {
-			// Cheerio can kill the process during parsing, make sure it doesn't
-			try {
-				this.$ = cheerio.load(this.html);
-			} catch (e) {
-				console.log('Cheerio parsing error: ' + this.url);
-			}
-		}
-
 		page.links = [];
-		this.$('a').each(function () {
+		this.dom()('a').each(function () {
 			var href = this.attr('href');
 			if (href) {
 				page.links.push(urllib.resolve(page.url, href));

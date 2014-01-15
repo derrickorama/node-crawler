@@ -211,7 +211,7 @@ describe('Crawler requests feature', function () {
 			}
 		});
 		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/non-page.txt', false);
-	});
+	}, 10000);
 
 	it('should set the MIME type for each type of page crawled', function (done) {
 		var crawler = new Crawler({
@@ -238,7 +238,7 @@ describe('Crawler requests feature', function () {
 	it('should not try to parse (cheerio) non-text MIME types', function (done) {
 		var crawler = new Crawler({
 			onPageCrawl: function (page) {
-				expect(page.$.html()).toBe('');
+				expect(page.dom().html()).toBe('');
 			},
 			onDrain: function () {
 				done();
