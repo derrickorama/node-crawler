@@ -1,7 +1,11 @@
 var _ = require('underscore');
-var Crawler = require('../crawler.js').Crawler;
+var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler queue', function () {
+
+	var mockResponse = function (params, callback) {
+		callback(null, { statusCode: 200, req: { method: 'GET' } }, '');
+	};
 
 	it('should crawl a URL when one is queued', function (done) {
 		var crawler = new Crawler({
@@ -10,6 +14,7 @@ describe('Crawler queue', function () {
 				done();
 			}
 		});
+		spyOn(crawler, '_request').andCallFake(mockResponse);
 		crawler.queue('http://www.google.com', false);
 	});
 
@@ -45,6 +50,7 @@ describe('Crawler cookie support', function () {
 
 	it('supports cookies by default', function (done) {
 		var crawler = new Crawler({
+			crawlExternal: true,
 			onPageCrawl: function (page, response) {
 				expect(_.isObject(response.request._jar)).toBe(true);
 				expect(response.request._jar.hasOwnProperty('cookies')).toBe(true);
@@ -52,11 +58,12 @@ describe('Crawler cookie support', function () {
 			}
 		});
 		expect(crawler.acceptCookies).toBe(true);
-		crawler.queue('http://www.yahoo.com/', false);
+		crawler.queue('http://www.yahoo.com/', true);
 	});
 
 	it('allows you to turn off support for cookies', function (done) {
 		var crawler = new Crawler({
+			crawlExternal: true,
 			onPageCrawl: function (page, response) {
 				expect(response.request._jar).toBe(false);
 				done();
@@ -64,20 +71,21 @@ describe('Crawler cookie support', function () {
 			acceptCookies: false
 		});
 		expect(crawler.acceptCookies).toBe(false);
-		crawler.queue(BASIC_LINK_PAGE, false);
+		crawler.queue(BASIC_LINK_PAGE, true);
 	});
 
 describe('Requests', function () {
 
 	it('should support HTTPS urls', function (done) {
 		var crawler = new Crawler({
+			crawlExternal: true,
 			onPageCrawl: function (page) {
 				expect(page.url).toBe(BASIC_LINK_PAGE);
 				done();
 			}
 		});
 
-		crawler.queue(BASIC_LINK_PAGE, false);
+		crawler.queue(BASIC_LINK_PAGE, true);
 	});
 
 });

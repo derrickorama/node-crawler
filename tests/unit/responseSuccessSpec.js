@@ -1,5 +1,5 @@
-var Crawler = require('../crawler.js').Crawler;
-var Page = require('../crawler.js').Page;
+var Crawler = require('../../crawler.js').Crawler;
+var Page = require('../../crawler.js').Page;
 
 describe('Crawler._responseSuccess method', function () {
 	var callback,
@@ -91,14 +91,6 @@ describe('Crawler._responseSuccess method', function () {
 			expect(queueSpy).not.toHaveBeenCalled();
 		});
 
-		it('does not crawl URLs (by default) if they do not reside on the same domain', function () {
-			pageInfo.page.links = [
-				'http://external.com'
-			];
-			crawler._responseSuccess(pageInfo, response, '', callback);
-			expect(queueSpy).not.toHaveBeenCalled();
-		});
-
 		describe('external URL queueing', function () {
 
 			beforeEach(function () {
@@ -109,22 +101,18 @@ describe('Crawler._responseSuccess method', function () {
 				crawler._responseSuccess(pageInfo, response, '', callback);
 			});
 		
-			it('crawls external URLs if the crawler\'s _crawlExternal property is true', function () {
+			it('queues external URLs', function () {
 				expect(queueSpy.calls[0].args[0]).toBe('http://external.com/');
 			});
 		
 			it('tells the queue that it should not crawl links on that page', function () {
-				expect(queueSpy.calls[0].args[1]).toBe(false);
+				expect(queueSpy.calls[0].args[1]).toBe(true);
 			});
 		
 			it('tells the queue that it should use a HEAD request', function () {
 				expect(queueSpy.calls[0].args[2]).toBe(true);
 			});
 		
-		});
-
-		it('crawls external URLs if the crawler\'s _crawlExternal property is true', function () {
-			
 		});
 
 		describe('URL normalization', function () {

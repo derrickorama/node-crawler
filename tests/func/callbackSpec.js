@@ -1,9 +1,17 @@
 var _ = require('underscore');
-var Crawler = require('../crawler.js').Crawler;
+var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler callbacks feature', function () {
 
 	var NON_200_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/page-with-404s.html';
+
+	var mockResponse = function (params, callback) {
+		callback(null, { statusCode: 200, req: { method: 'GET' } }, '');
+	};
+
+	var mockFailResponse = function (params, callback) {
+		callback(null, { statusCode: 400, req: { method: 'GET' } }, '');
+	};
 
 	/*
 	| Defaults
@@ -83,6 +91,7 @@ describe('Crawler callbacks feature', function () {
 				done();
 			}
 		});
+		spyOn(crawler, '_request').andCallFake(mockResponse);
 		crawler.queue('http://google.com', false);
 	});
 
@@ -90,6 +99,7 @@ describe('Crawler callbacks feature', function () {
 		var pagesCrawled = 0;
 
 		var crawler = new Crawler({
+			crawlExternal: true,
 			onPageCrawl: function () {
 				pagesCrawled++;
 			},
@@ -98,7 +108,9 @@ describe('Crawler callbacks feature', function () {
 				done();
 			}
 		});
-		crawler.queue('http://google.com', false);
+
+		spyOn(crawler, '_request').andCallFake(mockResponse);
+		crawler.queue('http://www.google.com', true);
 	});
 
 	it('should not send non 200 status code pages to onPageCrawl method', function (done) {
@@ -109,13 +121,14 @@ describe('Crawler callbacks feature', function () {
 				pagesCrawled++;
 			},
 			onDrain: function () {
-				expect(pagesCrawled).toBe(1);
+				expect(pagesCrawled).toBe(0);
 				done();
 			},
 			crawlExternal: true
 		});
 
-		crawler.queue(NON_200_PAGE);
+		spyOn(crawler, '_request').andCallFake(mockFailResponse);
+		crawler.queue('http://badpage.com/');
 	});
 
 	it('should send non 200 status code pages to onError method', function (done) {
@@ -159,12 +172,15 @@ describe('Crawler callbacks feature', function () {
 	it('should include the Page object and the response in the onPageCrawl callback', function (done) {
 		var crawler = new Crawler({
 			onPageCrawl: function (page, response) {
-				expect(page.url).toBe('http://google.com/');
+				expect(page.url).toBe('http://www.yahoo.com/');
 				expect(response.req.method).toBe('GET');
 				done();
 			}
 		});
-		crawler.queue('http://google.com', false);
+
+		// Fake response
+		spyOn(crawler, '_request').andCallFake(mockResponse);
+		crawler.queue('http://www.yahoo.com', false);
 	});
 
 	it('should pass response data to onError method when non 200 status message errors occur', function (done) {

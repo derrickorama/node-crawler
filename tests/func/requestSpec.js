@@ -1,5 +1,5 @@
 var urllib = require('url');
-var Crawler = require('../crawler.js').Crawler;
+var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler requests feature', function () {
 
@@ -39,12 +39,14 @@ describe('Crawler requests feature', function () {
 
 	it('should use the dummy user agent string by default for any request', function (done) {
 		var crawler = new Crawler({
+			crawlExternal: true,
 			onPageCrawl: function (page, response) {
 				expect(response.request.headers['User-Agent']).toBe('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
 				done();
 			}
 		});
-		crawler.queue('https://dropbox.com', false);
+
+		crawler.queue('https://dropbox.com', true);
 	});
 
 	/*
@@ -54,6 +56,7 @@ describe('Crawler requests feature', function () {
 	it('should change the timeout of a request based on the timeout specified', function (done) {
 		var crawler = new Crawler({
 			timeout: 1,
+			crawlExternal: true,
 			onDrain: function () {
 				var timeEnd = new Date();
 				// Make sure the timing falls within .1 seconds of the timeout
@@ -65,18 +68,19 @@ describe('Crawler requests feature', function () {
 		expect(crawler.timeout).toBe(1);
 
 		var timeStart = new Date();
-		crawler.queue('http://dropbox.com', false);
+		crawler.queue('http://dropbox.com', true);
 	});
 
 	it('should allow you to turn on strict ssl', function (done) {
 		var crawler = new Crawler({
+			crawlExternal: true,
 			onPageCrawl: function () {
 				done();
 			},
 			strictSSL: true
 		});
 		expect(crawler.strictSSL).toBe(true);
-		crawler.queue(BASIC_LINK_PAGE, false);
+		crawler.queue(BASIC_LINK_PAGE, true);
 	});
 
 	it('should change number of retries if specified', function () {
@@ -237,6 +241,7 @@ describe('Crawler requests feature', function () {
 
 	it('should not try to parse (cheerio) non-text MIME types', function (done) {
 		var crawler = new Crawler({
+			crawlExternal: true,
 			onPageCrawl: function (page) {
 				expect(page.dom().html()).toBe('');
 			},
@@ -244,49 +249,7 @@ describe('Crawler requests feature', function () {
 				done();
 			}
 		});
-		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/blank.pdf', false);
+		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/blank.pdf', true);
 	});
 
-});
-
-/*
-| _wasCrawled method
-*/
-describe('Crawler._wasCrawled method', function () {
-	var crawler;
-
-	beforeEach(function () {
-		crawler = new Crawler();
-	});
-
-	it('exists', function () {
-		expect(crawler._wasCrawled instanceof Function).toBe(true);
-	});
-
-	it('calls the parse method of the "url" module', function () {
-		var parseSpy = spyOn(urllib, 'parse').andCallThrough();
-		crawler._wasCrawled('http://www.google.com');
-		expect(parseSpy).toHaveBeenCalledWith('http://www.google.com');
-	});
-
-	it('returns false if the URL doesn\'t exist in crawler._pages object', function () {
-		var wasCrawled = crawler._wasCrawled('http://www.google.com');
-		expect(wasCrawled).toBe(false);
-	});
-
-	it('returns true if the URL already exist in crawler._pages object', function () {
-		crawler._pages = { 'http://www.google.com/': true };
-		var wasCrawled = crawler._wasCrawled('http://www.google.com/');
-		expect(wasCrawled).toBe(true);
-	});
-
-	it('considers non-strings as empty strings', function () {
-		// Note: these would throw errors usuall
-		crawler._wasCrawled(null);
-		crawler._wasCrawled(undefined);
-		crawler._wasCrawled(2);
-		crawler._wasCrawled([]);
-		crawler._wasCrawled({});
-	});
-	
 });

@@ -1,5 +1,5 @@
 var _ = require('underscore');
-var Page = require('../crawler.js').Page;
+var Page = require('../../crawler.js').Page;
 
 describe('Crawler page', function () {
 

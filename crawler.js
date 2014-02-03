@@ -83,11 +83,17 @@ Page.prototype = {
 };
 
 Crawler.prototype = {
+	isExternal: function (base, url) {
+		var baseURLData = urllib.parse(base);
+		var urlData = urllib.parse(url);
+		return urlData.protocol !== baseURLData.protocol || urlData.host !== baseURLData.host;
+	},
 	_responseSuccess: function (pageInfo, response, body, callback) {
 		/*jshint scripturl:true */
 
 		var crawler = this,
 			i,
+			isExternal,
 			page = pageInfo.page,
 			pageLink,
 			pageLinksLength;
@@ -104,6 +110,7 @@ Crawler.prototype = {
 			pageLinksLength = page.links.length;
 			for (i = 0; i < pageLinksLength; i++) {
 				pageLink = new Page(urllib.resolve(page.url, page.links[i]));
+				isExternal = false;
 
 				// Ignore non-page links
 				if (
@@ -116,19 +123,11 @@ Crawler.prototype = {
 				}
 
 				// Make sure we're crawling a link on the same domain
-				if (
-					pageLink.urlData.protocol !== page.urlData.protocol ||
-					pageLink.urlData.host !== page.urlData.host
-				) {
-					// Crawl external URLs if external URL crawling is true
-					if (crawler._crawlExternal === true) {
-						crawler.queue(pageLink.url, false, true);
-					}
-					continue;
-				}
+				isExternal = crawler.isExternal(page.urlData.href, pageLink.urlData.href);
 
 				// Crawl same-domain URL
-				crawler.queue(pageLink.url);
+				// - tell queue whether this is external and to use a HEAD request if true
+				crawler.queue(pageLink.url, isExternal, isExternal);
 			}
 		}
 
@@ -215,15 +214,20 @@ Crawler.prototype = {
 			wasRedirect = true;
 		}
 
+		// Check if page was crawled already
 		wasCrawled = this._wasCrawled(finalURL);
 
-		// Calls onRedirect callback
+		// Handle redirect and do not run any other callbacks (success or failure)
 		if (wasRedirect === true) {
 			this.onRedirect(pageInfo.page, response, wasCrawled);
-		}
 
-		// Exits if page was already crawled/processed
-		if (wasRedirect === true && wasCrawled === true) {
+			// Queues final URL if page was not crawled yet
+			if (wasCrawled === false) {
+				// Queue the page as an external link if appropriate (using pageInfo.page.isExternal)
+				// Note: otherwise the crawler will start crawling the external site
+				this.queue(finalURL, pageInfo.page.isExternal, pageInfo.page.isExternal);
+			}
+
 			finishCallback();
 			return false;
 		}
@@ -249,9 +253,14 @@ Crawler.prototype = {
 			this._responseError(pageInfo, response, error, finishCallback);
 		}
 	},
-	queue: function (url, crawlLinksOnPage, useHEAD) {
+	queue: function (url, isExternal, useHEAD) {
 		var crawler = this,
 			urlData = urllib.parse(url);
+
+		// Do not queue if this is an external link and we aren't supposed to crawl external links
+		if (isExternal === true && crawler._crawlExternal === false) {
+			return false;
+		}
 
 		url = urlData.href;
 
@@ -261,8 +270,8 @@ Crawler.prototype = {
 		}
 		
 		this._pages[url] = {
-			page: new Page(url, useHEAD),
-			crawlLinks: crawlLinksOnPage === false ? false : true,
+			page: new Page(url, isExternal),
+			crawlLinks: isExternal !== true,
 			method: useHEAD === true ? 'HEAD' : 'GET'
 		};
 

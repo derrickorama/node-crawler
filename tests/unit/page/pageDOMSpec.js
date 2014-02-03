@@ -1,5 +1,5 @@
 var cheerio = require('cheerio');
-var Page = require('../crawler.js').Page;
+var Page = require('../../../crawler.js').Page;
 
 describe('Page.dom method', function () {
 	var page;
