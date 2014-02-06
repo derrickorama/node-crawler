@@ -1,6 +1,7 @@
 var async = require('async');
 var urllib = require('url');
 var cheerio = require('cheerio');
+var _ = require('underscore');
 var request = require('request');
 
 var Crawler = function (params) {
@@ -20,6 +21,7 @@ var Crawler = function (params) {
 
 	// Public properties
 	this.acceptCookies = params.acceptCookies !== undefined ? params.acceptCookies : true;
+	this.excludePatterns = params.excludePatterns || [];
 	this.onDrain = params.onDrain || function () {};
 	this.onError = params.onError || function () {};
 	this.onPageCrawl = params.onPageCrawl || function () {};
@@ -255,7 +257,8 @@ Crawler.prototype = {
 	},
 	queue: function (url, isExternal, useHEAD) {
 		var crawler = this,
-			urlData = urllib.parse(url);
+			urlData = urllib.parse(url),
+			isExclude = false;
 
 		// Do not queue if this is an external link and we aren't supposed to crawl external links
 		if (isExternal === true && crawler._crawlExternal === false) {
@@ -266,6 +269,17 @@ Crawler.prototype = {
 
 		// This stops pages from being crawled again
 		if (crawler._wasCrawled(url) === true) {
+			return false;
+		}
+
+		// Don't crawl excludes
+		_.each(crawler.excludePatterns, function (pattern) {
+			var regex = new RegExp(pattern, 'gi');
+			if (regex.test(url) === true) {
+				isExclude = true;
+			}
+		});
+		if (isExclude === true) {
 			return false;
 		}
 		

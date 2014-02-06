@@ -23,4 +23,14 @@ describe('Crawler', function () {
 		expect(crawler.timeout).toBe(1000);
 	});
 
+	it('sets excludePatterns to an empty array by default', function () {
+		var crawler = new Crawler();
+		expect(crawler.excludePatterns).toEqual([]);
+	});
+
+	it('sets excludePatterns to an empty array', function () {
+		var crawler = new Crawler({ excludePatterns: ['/some/pattern.*'] });
+		expect(crawler.excludePatterns).toEqual(['/some/pattern.*']);
+	});
+
 });

@@ -67,6 +67,34 @@ describe('Crawler.queue method', function () {
         expect(added).toBe(false);
     });
 
+    describe('pattern exclusion', function () {
+
+        beforeEach(function () {
+            crawler.excludePatterns = ['/Section/Page\\.shtml', '.*whatever\\.shtml'];
+        });
+    
+        it('returns false if a URL matches a pattern', function () {
+            var result;
+
+            result = crawler.queue('http://domain.com/Section/Page.shtml');
+            expect(result).toBe(false);
+            result = crawler.queue('http://meh.com/whatever.shtml');
+            expect(result).toBe(false);
+        });
+
+        it('does not add URL to _pages', function () {
+            crawler.queue('http://domain.com/Section/Page.shtml');
+            expect(crawler._pages).toEqual({});
+        });
+
+        it('does not affect non-matched URLs', function () {
+            var result = crawler.queue('http://domain.com/Other-Section/Page.shtml');
+            expect(result).toBe(true);
+            expect(crawler._pages.hasOwnProperty('http://domain.com/Other-Section/Page.shtml')).toBe(true);
+        });
+    
+    });
+
     describe('page addition', function () {
 
         it('adds a key to the _pages object', function () {
