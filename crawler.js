@@ -136,18 +136,35 @@ Crawler.prototype = {
 		callback('onPageCrawl', [page, response]);
 	},
 	_responseError: function (pageInfo, response, error, callback) {
-		if (typeof response !== 'object') {
-			response = {};
+		// Replace response with an object if it is not one already
+		if (_.isObject(response) !== true) {
+			response = {
+				req: {}
+			};
 		}
 
-		// If a 405 was returned when requesting the HEAD, try GET instead
+		// Extend response.req (in case it's undefined)
+		response = _.extend({
+			req: {}
+		}, response);
+
+		// If a bad status code or a typical "I don't support this request method" error was returned when requesting the HEAD, try GET instead
 		if (
-			((response.statusCode === 405 || response.statusCode === 403) && response.req.method === 'HEAD') ||
-            // TODO: write tests for HTTP parsing errors (below)
-			(error && error.code && (error.code === 'HPE_INVALID_CONSTANT' || error.code === 'HPE_INVALID_HEADER_TOKEN'))
+			response.req.method === 'HEAD' &&
+			(
+				// Status codes
+				(response.statusCode === 405 || response.statusCode === 403 || response.statusCode === 404) ||
+				// Error codes
+				(error &&
+					(error.code === 'HPE_INVALID_CONSTANT' || error.code === 'HPE_INVALID_HEADER_TOKEN' || error.code === 'HPE_INVALID_CONTENT_LENGTH')
+				)
+			)
 		) {
+			// Switch method to GET
 			pageInfo.method = 'GET';
+			// Re-crawl page
 			this._crawlPage(pageInfo, callback);
+			// Do not report this as an error
 			return false;
 		}
 

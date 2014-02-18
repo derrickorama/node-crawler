@@ -203,8 +203,7 @@ describe('Crawler callbacks feature', function () {
 			onError: function (page, error, response) {
 				expect(page.url).toBe('avascript:/');
 				expect(error.message).toBe('Invalid URI "avascript:/"');
-				expect(_.isObject(response)).toBe(true);
-				expect(_.keys(response).length).toBe(0);
+				expect(response).toEqual({ req: {} });
 			},
 			onDrain: function () {
 				done();
