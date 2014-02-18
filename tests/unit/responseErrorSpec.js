@@ -57,6 +57,22 @@ describe('Crawler._responseError method', function () {
 		crawler._responseError(pageInfo, { req: { method: 'HEAD' } }, null, callbackSpy);
 	});
 
+	describe('GET requests', function () {
+	
+		withRetryTriggers(doNotRetryWithGET);
+
+	});
+
+	describe('HEAD requests', function () {
+
+		beforeEach(function () {
+			pageInfo.method = 'HEAD';
+		});
+	
+		withRetryTriggers(retryWithGET);
+	
+	});
+
 	function doNotRetryWithGET() {
 
 		it('does not re-crawl page with a second GET request', function () {
@@ -144,21 +160,5 @@ describe('Crawler._responseError method', function () {
 		});
 
 	}
-
-	describe('GET requests', function () {
-	
-		withRetryTriggers(doNotRetryWithGET);
-
-	});
-
-	describe('HEAD requests', function () {
-
-		beforeEach(function () {
-			response.req.method = 'HEAD';
-		});
-	
-		withRetryTriggers(retryWithGET);
-	
-	});
 
 });

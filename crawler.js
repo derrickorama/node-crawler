@@ -150,7 +150,7 @@ Crawler.prototype = {
 
 		// If a bad status code or a typical "I don't support this request method" error was returned when requesting the HEAD, try GET instead
 		if (
-			response.req.method === 'HEAD' &&
+			pageInfo.method === 'HEAD' &&
 			(
 				// Status codes
 				(response.statusCode === 405 || response.statusCode === 403 || response.statusCode === 404) ||
