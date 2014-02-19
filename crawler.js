@@ -17,7 +17,7 @@ var Crawler = function (params) {
 	this._pages = {};
 	this._queue = async.queue(function (page, callback) {
 		crawler._crawlPage(page, callback);
-	}, 3);
+	}, 4);
 
 	// Public properties
 	this.acceptCookies = params.acceptCookies !== undefined ? params.acceptCookies : true;
