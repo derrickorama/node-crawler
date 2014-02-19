@@ -99,10 +99,10 @@ describe('Crawler._responseError method', function () {
 
 	function withRetryTriggers(expectedResult) {
 
-		describe('with 405 status code', function () {
+		describe('with 400 status code', function () {
 
 			beforeEach(function () {
-				response.statusCode = 405;
+				response.statusCode = 400;
 				crawler._responseError(pageInfo, response, error, callbackSpy);
 			});
 
@@ -123,6 +123,16 @@ describe('Crawler._responseError method', function () {
 
 			beforeEach(function () {
 				response.statusCode = 404;
+				crawler._responseError(pageInfo, response, error, callbackSpy);
+			});
+
+			expectedResult();
+		});
+
+		describe('with 405 status code', function () {
+
+			beforeEach(function () {
+				response.statusCode = 405;
 				crawler._responseError(pageInfo, response, error, callbackSpy);
 			});
 

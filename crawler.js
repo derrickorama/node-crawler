@@ -153,7 +153,7 @@ Crawler.prototype = {
 			pageInfo.method === 'HEAD' &&
 			(
 				// Status codes
-				(response.statusCode === 405 || response.statusCode === 403 || response.statusCode === 404) ||
+				(response.statusCode === 400 || response.statusCode === 403 || response.statusCode === 404 || response.statusCode === 405) ||
 				// Error codes
 				(error &&
 					(error.code === 'HPE_INVALID_CONSTANT' || error.code === 'HPE_INVALID_HEADER_TOKEN' || error.code === 'HPE_INVALID_CONTENT_LENGTH')
