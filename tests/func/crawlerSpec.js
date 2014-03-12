@@ -80,48 +80,6 @@ describe('Crawler link crawling feature', function () {
 	});
 
 	/*
-	| Request failures
-	*/
-
-	it('should try getting the HEAD of external links if specified to crawl external links', function (done) {
-		var pagesCrawled = 0;
-
-		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
-				pagesCrawled++;
-
-				if (page.url.indexOf('google.com') > -1) {
-					expect(response.req.method).toBe('HEAD');
-				}
-			},
-			onDrain: function () {
-				expect(pagesCrawled).toBe(3);
-				done();
-			},
-			crawlExternal: true
-		});
-
-		crawler.queue(EXTERNAL_URL_PAGE);
-	});
-
-	it('should attempt a GET request if a HEAD request is rejected', function (done) {
-		var pageCrawled = false;
-
-		var crawler = new Crawler({
-			onPageCrawl: function () {
-				pageCrawled = true;
-			},
-			onDrain: function () {
-				expect(pageCrawled).toBe(true);
-				done();
-			}
-		});
-
-		spyOn(crawler, '_request').andCallFake(mockResponse)
-		crawler.queue('https://www.google.com/', false, true);
-	});
-
-	/*
 	| Content parsing
 	*/
 
@@ -132,6 +90,7 @@ describe('Crawler link crawling feature', function () {
 				done();
 			}
 		});
+		spyOn(console, 'log'); // Silence error
 		crawler.queue('https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/non-page.txt', false);
 	}, 10000);
 

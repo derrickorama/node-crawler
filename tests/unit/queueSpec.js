@@ -142,35 +142,6 @@ describe('Crawler.queue method', function () {
 
         });
 
-        describe('GET/HEAD method setter', function () {
-
-            it('sets method to HEAD if true is specified', function () {
-                crawler.queue('http://www.google.com/', null, true);
-                expect(crawler._pages['http://www.google.com/'].method).toBe('HEAD');
-            });
-
-            it('sets isExternal to false if not HEAD method', function () {
-                crawler.queue('http://www.google.com/', null, false);
-                expect(crawler._pages['http://www.google.com/'].page.isExternal).toBe(false);
-            });
-
-            it('sets isExternal to false if HEAD method is not specified', function () {
-                crawler.queue('http://www.google.com/', null);
-                expect(crawler._pages['http://www.google.com/'].page.isExternal).toBe(false);
-            });
-
-            it('sets method to GET if false specified', function () {
-                crawler.queue('http://www.google.com/', null, false);
-                expect(crawler._pages['http://www.google.com/'].method).toBe('GET');
-            });
-
-            it('sets method to GET if not specified', function () {
-                crawler.queue('http://www.google.com/');
-                expect(crawler._pages['http://www.google.com/'].method).toBe('GET');
-            });
-
-        });
-
     });
 
     describe('async.queue addition', function () {

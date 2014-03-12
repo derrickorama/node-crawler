@@ -58,46 +58,6 @@ describe('Crawler._responseError method', function () {
 	});
 
 	describe('GET requests', function () {
-	
-		withRetryTriggers(doNotRetryWithGET);
-
-	});
-
-	describe('HEAD requests', function () {
-
-		beforeEach(function () {
-			pageInfo.method = 'HEAD';
-		});
-	
-		withRetryTriggers(retryWithGET);
-	
-	});
-
-	function doNotRetryWithGET() {
-
-		it('does not re-crawl page with a second GET request', function () {
-			expect(crawlPageSpy).not.toHaveBeenCalled();
-		});
-
-		it('sends error through callback', function () {
-			expect(callbackSpy).toHaveBeenCalledWith('onError', [pageInfo.page, error, response]);
-		});
-
-	}
-
-	function retryWithGET() {
-
-		it('does not send error through callback', function () {
-			expect(callbackSpy).not.toHaveBeenCalled();
-		});
-
-		it('re-crawls page with a GET request', function () {
-			expect(crawlPageSpy).toHaveBeenCalledWith({ page: 'page stuff', method: 'GET' }, callbackSpy);
-		});
-
-	}
-
-	function withRetryTriggers(expectedResult) {
 
 		describe('with 400 status code', function () {
 
@@ -106,7 +66,7 @@ describe('Crawler._responseError method', function () {
 				crawler._responseError(pageInfo, response, error, callbackSpy);
 			});
 
-			expectedResult();
+			sendsError();
 		});
 
 		describe('with 403 status code', function () {
@@ -116,7 +76,7 @@ describe('Crawler._responseError method', function () {
 				crawler._responseError(pageInfo, response, error, callbackSpy);
 			});
 
-			expectedResult();
+			sendsError();
 		});
 
 		describe('with 404 status code', function () {
@@ -126,7 +86,7 @@ describe('Crawler._responseError method', function () {
 				crawler._responseError(pageInfo, response, error, callbackSpy);
 			});
 
-			expectedResult();
+			sendsError();
 		});
 
 		describe('with 405 status code', function () {
@@ -136,7 +96,7 @@ describe('Crawler._responseError method', function () {
 				crawler._responseError(pageInfo, response, error, callbackSpy);
 			});
 
-			expectedResult();
+			sendsError();
 		});
 
 		describe('with HPE_INVALID_CONSTANT error', function () {
@@ -146,7 +106,7 @@ describe('Crawler._responseError method', function () {
 				crawler._responseError(pageInfo, response, error, callbackSpy);
 			});
 
-			expectedResult();
+			sendsError();
 		});
 
 		describe('with HPE_INVALID_HEADER_TOKEN error', function () {
@@ -156,7 +116,7 @@ describe('Crawler._responseError method', function () {
 				crawler._responseError(pageInfo, response, error, callbackSpy);
 			});
 
-			expectedResult();
+			sendsError();
 		});
 
 		describe('with HPE_INVALID_CONTENT_LENGTH error', function () {
@@ -166,7 +126,15 @@ describe('Crawler._responseError method', function () {
 				crawler._responseError(pageInfo, response, error, callbackSpy);
 			});
 
-			expectedResult();
+			sendsError();
+		});
+
+	});
+
+	function sendsError() {
+
+		it('sends error through callback', function () {
+			expect(callbackSpy).toHaveBeenCalledWith('onError', [pageInfo.page, error, response]);
 		});
 
 	}

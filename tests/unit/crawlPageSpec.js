@@ -16,7 +16,6 @@ describe('Crawler._crawlPage method', function () {
 		var onResponseSpy;
 		var requestSpy;
 		var PAGE_INFO = {
-			method: 'HEAD',
 			page: {
 				url: 'http://www.google.com'
 			}
@@ -36,10 +35,6 @@ describe('Crawler._crawlPage method', function () {
 	
 		it('uses the pageInfo.page.url for the url', function () {
 			expect(requestSpy.calls[0].args[0].url).toBe('http://www.google.com');
-		});
-	
-		it('uses the pageInfo.method for the method', function () {
-			expect(requestSpy.calls[0].args[0].method).toBe('HEAD');
 		});
 	
 		it('uses the crawler.timeout for the timeout', function () {
@@ -67,7 +62,6 @@ describe('Crawler._crawlPage method', function () {
 	describe('request cookie setter', function () {
 		var requestSpy;
 		var PAGE_INFO = {
-			method: 'HEAD',
 			page: {
 				url: 'http://www.google.com'
 			}

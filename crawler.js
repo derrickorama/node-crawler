@@ -148,26 +148,6 @@ Crawler.prototype = {
 			req: {}
 		}, response);
 
-		// If a bad status code or a typical "I don't support this request method" error was returned when requesting the HEAD, try GET instead
-		if (
-			pageInfo.method === 'HEAD' &&
-			(
-				// Status codes
-				(response.statusCode === 400 || response.statusCode === 403 || response.statusCode === 404 || response.statusCode === 405) ||
-				// Error codes
-				(error &&
-					(error.code === 'HPE_INVALID_CONSTANT' || error.code === 'HPE_INVALID_HEADER_TOKEN' || error.code === 'HPE_INVALID_CONTENT_LENGTH')
-				)
-			)
-		) {
-			// Switch method to GET
-			pageInfo.method = 'GET';
-			// Re-crawl page
-			this._crawlPage(pageInfo, callback);
-			// Do not report this as an error
-			return false;
-		}
-
 		callback('onError', [pageInfo.page, error, response]);
 	},
 	_wasCrawled: function (url) {
@@ -190,12 +170,10 @@ Crawler.prototype = {
 	_request: request,
 	_crawlPage: function (pageInfo, finishCallback) {
 		var crawler = this,
-			page = pageInfo.page,
-			method = pageInfo.method;
+			page = pageInfo.page;
 
 		this._request({
 			url: page.url,
-			method: method,
 			timeout: this.timeout,
 			strictSSL: this.strictSSL,
 			jar: this.acceptCookies ? request.jar() : false,
@@ -272,7 +250,7 @@ Crawler.prototype = {
 			this._responseError(pageInfo, response, error, finishCallback);
 		}
 	},
-	queue: function (url, isExternal, useHEAD) {
+	queue: function (url, isExternal) {
 		var crawler = this,
 			urlData = urllib.parse(url),
 			isExclude = false;
@@ -302,8 +280,7 @@ Crawler.prototype = {
 		
 		this._pages[url] = {
 			page: new Page(url, isExternal),
-			crawlLinks: isExternal !== true,
-			method: useHEAD === true ? 'HEAD' : 'GET'
+			crawlLinks: isExternal !== true
 		};
 
 		this._queue.push(this._pages[url], function () {
