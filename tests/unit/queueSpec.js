@@ -61,7 +61,7 @@ describe('Crawler.queue method', function () {
 
     it('returns false if URL was already crawled', function () {
         // Add page to _pages property
-        crawler._pages['http://www.google.com/'] = true;
+        crawler._urlsCrawled = ['http://www.google.com/'];
 
         var added = crawler.queue('http://www.google.com/');
         expect(added).toBe(false);

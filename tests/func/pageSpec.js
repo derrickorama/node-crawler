@@ -28,6 +28,11 @@ describe('Crawler page', function () {
 		expect(page.links.length).toBe(0);
 	});
 
+	it('should have an empty array of redirects by default', function () {
+		var page = new Page();
+		expect(page.redirects).toEqual([]);
+	});
+
 	it('should have a default type of text/html', function () {
 		var page = new Page();
 		expect(page.type).toBe('text/html');

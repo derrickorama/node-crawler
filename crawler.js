@@ -15,6 +15,7 @@ var Crawler = function (params) {
 	this._crawlExternal = params.crawlExternal || false;
 	this._killed = false;
 	this._pages = {};
+	this._urlsCrawled = [];
 	this._queue = async.queue(function (page, callback) {
 		crawler._crawlPage(page, callback);
 	}, 4);
@@ -39,6 +40,7 @@ var Page = function (url, isExternal) {
 	this.url = url || '';
 	this.urlData = urllib.parse(this.url);
 	this.html = '';
+	this.redirects = [];
 	this.type = 'text/html';
 	this.links = [];
 	this.isExternal = isExternal || false;
@@ -161,7 +163,7 @@ Crawler.prototype = {
 
 		var href = urllib.parse(url).href;
 
-		if (this._pages.hasOwnProperty(href) === true) {
+		if (this._urlsCrawled.indexOf(href) > -1) {
 			return true;
 		}
 
@@ -178,11 +180,47 @@ Crawler.prototype = {
 			strictSSL: this.strictSSL,
 			jar: this.acceptCookies ? request.jar() : false,
 			headers: {
-				'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+				'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
 			}
 		}, function (error, response, body) {
 			crawler._onResponse(pageInfo, error, response, body, finishCallback);
 		});
+	},
+	_processRedirect: function (pageInfo, finalURL, response) {
+		/*
+		| Note: this section was particularly picky. The sequence of events is important.
+		*/
+		var cleanFinalURL = urllib.parse(finalURL).href;
+		var wasAdded = false;
+
+		// // Determine if page was already added
+		if (this._pages.hasOwnProperty(cleanFinalURL) === true) {
+			wasAdded = true;
+		}
+
+		// // Determine if page URL was queued
+		if (this._urlsCrawled.indexOf(cleanFinalURL) < 0) {
+			this._urlsCrawled.push(cleanFinalURL); // Add URL to URLs crawled
+		}
+
+		// // Handle redirected page
+		this.onRedirect(pageInfo.page, response);
+
+		// // Delete redirect record from pages object
+		delete this._pages[pageInfo.page.url];
+
+		// // Update page info
+		this._pages[cleanFinalURL] = _.clone(pageInfo);
+		this._pages[cleanFinalURL].page.redirects.push(pageInfo.page.url); // Add redirected page
+		this._pages[cleanFinalURL].page.url = cleanFinalURL;
+
+		// // If page was already added/queued, skip the processing
+		if (wasAdded === true) {
+			return null;
+		}
+
+		// // Update pageInfo so that it's processing the page it was redirected to and not the redirect
+		return this._pages[cleanFinalURL];
 	},
 	_onResponse: function (pageInfo, error, response, body, finishCallback) {
 		// If the crawler was killed before this request was ready, finish the process
@@ -191,9 +229,7 @@ Crawler.prototype = {
 			return false;
 		}
 
-		var finalURL,
-			wasRedirect = false,
-			wasCrawled;
+		var finalURL;
 
 		// Make sure response is an object
 		if (!response || typeof response !== 'object') {
@@ -207,26 +243,13 @@ Crawler.prototype = {
 
 		// Check if page was a redirect and save the redirect data
 		if (finalURL !== undefined && finalURL !== pageInfo.page.url) {
-			pageInfo.page.redirect = finalURL;
-			wasRedirect = true;
-		}
+			pageInfo = this._processRedirect(pageInfo, finalURL, response);
 
-		// Check if page was crawled already
-		wasCrawled = this._wasCrawled(finalURL);
-
-		// Handle redirect and do not run any other callbacks (success or failure)
-		if (wasRedirect === true) {
-			this.onRedirect(pageInfo.page, response, wasCrawled);
-
-			// Queues final URL if page was not crawled yet
-			if (wasCrawled === false) {
-				// Queue the page as an external link if appropriate (using pageInfo.page.isExternal)
-				// Note: otherwise the crawler will start crawling the external site
-				this.queue(finalURL, pageInfo.page.isExternal, pageInfo.page.isExternal);
+			// If pageInfo is null, skip it. It's already been processed.
+			if (pageInfo === null) {
+				finishCallback();
+				return false;
 			}
-
-			finishCallback();
-			return false;
 		}
 
 		if (error === null && response.statusCode === 200) {
@@ -278,11 +301,14 @@ Crawler.prototype = {
 			return false;
 		}
 		
+		// Add page to list of pages
 		this._pages[url] = {
 			page: new Page(url, isExternal),
 			crawlLinks: isExternal !== true
 		};
+		this._urlsCrawled.push(url);
 
+		// Add to async queue
 		this._queue.push(this._pages[url], function () {
 			crawler._asyncQueueCallback.apply(crawler, arguments);
 		});

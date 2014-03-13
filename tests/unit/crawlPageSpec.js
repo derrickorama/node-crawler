@@ -45,9 +45,9 @@ describe('Crawler._crawlPage method', function () {
 			expect(requestSpy.calls[0].args[0].strictSSL).toBe(false);
 		});
 	
-		it('uses the Googlebot User-Agent', function () {
+		it('uses one of the latest Chrome User-Agents', function () {
 			expect(requestSpy.calls[0].args[0].headers).toEqual({
-				'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+				'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
 			});
 		});
 

@@ -26,8 +26,8 @@ describe('Crawler._wasCrawled method', function () {
 		expect(wasCrawled).toBe(false);
 	});
 
-	it('returns true if the URL already exist in crawler._pages object', function () {
-		crawler._pages = { 'http://www.google.com/': true };
+	it('returns true if the URL already exist in crawler._urlsCrawled property', function () {
+		crawler._urlsCrawled = ['http://www.google.com/'];
 		var wasCrawled = crawler._wasCrawled('http://www.google.com/');
 		expect(wasCrawled).toBe(true);
 	});

@@ -5,16 +5,6 @@ describe('Crawler requests feature', function () {
 
 	var BASIC_LINK_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/basic-link-crawl.html';
 
-	var mockRequest = function (params, callback) {
-		if (params.method === 'HEAD') {
-			// Deny HEAD requests
-			callback(null, { statusCode: 403, req: { method: 'HEAD' } }, '');
-		} else {
-			// Allow other requests
-			callback(null, { statusCode: 200, req: { method: 'GET' } }, '');
-		}
-	};
-
 	/*
 	| Defaults
 	*/
@@ -38,7 +28,7 @@ describe('Crawler requests feature', function () {
 		var crawler = new Crawler({
 			crawlExternal: true,
 			onPageCrawl: function (page, response) {
-				expect(response.request.headers['User-Agent']).toBe('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)');
+				expect(response.request.headers['User-Agent']).toBe('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36');
 				done();
 			}
 		});
