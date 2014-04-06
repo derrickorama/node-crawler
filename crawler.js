@@ -252,6 +252,17 @@ Crawler.prototype = {
 			}
 		}
 
+		// Ignore error if it's due to a bad content-length and we're checking an external link
+		if (
+			error !== null &&
+			error.code === 'HPE_INVALID_CONSTANT' &&
+			_.pluck(response.headers, 'content-length').length > 0 &&
+			response.statusCode === 200 &&
+			pageInfo.page.isExternal === true
+		) {
+			error = null;
+		}
+
 		if (error === null && response.statusCode === 200) {
 			this._responseSuccess(pageInfo, response, body, finishCallback);
 		} else {

@@ -200,6 +200,25 @@ describe('Crawler._onResponse method', function () {
 	
 	});
 
+	describe('on parse errors with external links that return 200 and include a content-length header', function () {
+		var response;
+
+		beforeEach(function () {
+			pageInfo.page.isExternal = true;
+			response = { statusCode: 200, headers: { 'content-length': '4' } };
+			crawler._onResponse(pageInfo, { code: 'HPE_INVALID_CONSTANT' }, response, body, finishCallbackSpy);
+		});
+	
+		it('does not execute _responseError method', function () {
+			expect(failureSpy).not.toHaveBeenCalled();
+		});
+
+		it('executes _responseSuccess method', function () {
+			expect(successSpy).toHaveBeenCalledWith(pageInfo, response, body, finishCallbackSpy);
+		});
+	
+	});
+
 	function onErrorSpecs(response, error) {
 
 		it('does not execute _responseSuccess', function () {

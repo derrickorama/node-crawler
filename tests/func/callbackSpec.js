@@ -1,3 +1,4 @@
+var http = require('http');
 var _ = require('underscore');
 var Crawler = require('../../crawler.js').Crawler;
 
@@ -162,7 +163,49 @@ describe('Crawler callbacks feature', function () {
 			crawlExternal: true
 		});
 
-		crawler.queue('avascript:/');
+		spyOn(crawler, '_request').andCallFake(function (params, callback) {
+			callback('error!', undefined, undefined);
+		});
+
+		crawler.queue('whatev');
+	});
+
+	it('does not consider parse errors on external URLs as errors if there\'s a content-length header and the status code is 200', function (done) {
+		var pagesCrawled = 0;
+		var server;
+
+		var crawler = new Crawler({
+			onPageCrawl: function () {
+				pagesCrawled++;
+			},
+			onError: function () {
+				console.log('Parse error not caught!');
+			},
+			onDrain: function () {
+				expect(pagesCrawled).toBe(2);
+				server.close();
+				done();
+			},
+			crawlExternal: true
+		});
+
+		// Mock request
+		var realRequest = crawler._request;
+		var mockRequest = function (params, callback) {
+			if (params.url === 'http://domain.com/') {
+				callback(null, { statusCode: 200 }, '<a href="http://localhost:6767/">external link</a>');
+			} else {
+				realRequest(params, callback);
+			}
+		};
+		crawler._request = mockRequest;
+
+		server = http.createServer(function (req, res) {
+			res.writeHead(200, { 'Content-Length': '4' });
+			res.end('Hello');
+		}).listen(6767, 'localhost');
+
+		crawler.queue('http://domain.com/');
 	});
 
 	/*
@@ -198,17 +241,21 @@ describe('Crawler callbacks feature', function () {
 		crawler.queue(NON_200_PAGE);
 	});
 
-	it('should pass the page, error, and response to onError method when an error occurs', function (done) {
+	it('passes the page, error, and response to onError method when an error occurs', function (done) {
 		var crawler = new Crawler({
 			onError: function (page, error, response) {
 				expect(page.url).toBe('avascript:/');
-				expect(error.message).toBe('Invalid URI "avascript:/"');
+				expect(error.message).toBe('error!');
 				expect(response).toEqual({ req: {} });
 			},
 			onDrain: function () {
 				done();
 			},
 			crawlExternal: true
+		});
+
+		spyOn(crawler, '_request').andCallFake(function (params, callback) {
+			callback({ message: 'error!' }, 'some response', 'some body');
 		});
 
 		crawler.queue('avascript:/');

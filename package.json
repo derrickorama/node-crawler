@@ -16,7 +16,7 @@
   "dependencies": {
     "async": "~0.2.9",
     "cheerio": "~0.12.4",
-    "request": "git+https://github.com/mikeal/request.git#v2.34.1"
+    "request": "git+https://github.com/derrickorama/request.git"
   },
   "license": "MIT",
   "main": "./crawler",

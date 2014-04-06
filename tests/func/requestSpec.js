@@ -42,17 +42,17 @@ describe('Crawler requests feature', function () {
 
 	it('should change the timeout of a request based on the timeout specified', function (done) {
 		var crawler = new Crawler({
-			timeout: 1,
+			timeout: 1000,
 			crawlExternal: true,
 			onDrain: function () {
 				var timeEnd = new Date();
 				// Make sure the timing falls within .1 seconds of the timeout
-				expect((timeEnd - timeStart)/1000).toBeCloseTo(0, 1);
+				expect((timeEnd - timeStart)/1000).toBeLessThan(5);
 				done();
 			}
 		});
 		
-		expect(crawler.timeout).toBe(1);
+		expect(crawler.timeout).toBe(1000);
 
 		var timeStart = new Date();
 		crawler.queue('http://dropbox.com', true);
