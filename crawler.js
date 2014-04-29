@@ -204,7 +204,7 @@ Crawler.prototype = {
 		}
 
 		// // Handle redirected page
-		this.onRedirect(pageInfo.page, response);
+		this.onRedirect(_.clone(pageInfo.page), response);
 
 		// // Delete redirect record from pages object
 		delete this._pages[pageInfo.page.url];

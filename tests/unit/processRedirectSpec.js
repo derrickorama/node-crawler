@@ -80,6 +80,19 @@ describe('Crawler._processRedirect method', function () {
 			expect(onRedirectSpy).toHaveBeenCalledWith(pageInfo.page, response);
 		});
 
+		it('preserves redirect\'s page url for onRedirect method', function (done) {
+			pageInfo.page.url = 'http://domain.com/redirected';
+
+			onRedirectSpy.andCallFake(function (page, response) {
+				setTimeout(function () {
+					expect(page.url).toBe('http://domain.com/redirected');
+					done();
+				});
+			});
+
+			crawler._processRedirect(pageInfo, finalURL, response);
+		});
+
 		describe('record in crawler pages', function () {
 		
 			beforeEach(function () {
