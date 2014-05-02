@@ -2,7 +2,9 @@ var async = require('async');
 var urllib = require('url');
 var cheerio = require('cheerio');
 var _ = require('underscore');
+var phantom = require('phantom');
 var request = require('request');
+var winston = require('winston');
 
 var Crawler = function (params) {
 	if (typeof params !== 'object') {
@@ -27,6 +29,7 @@ var Crawler = function (params) {
 	this.onError = params.onError || function () {};
 	this.onPageCrawl = params.onPageCrawl || function () {};
 	this.onRedirect = params.onRedirect || function () {};
+	this.render = params.render || false;
 	this.retries = params.retries || 0;
 	this.strictSSL = params.strictSSL || false;
 	this.timeout = params.timeout || 60000;
@@ -37,6 +40,8 @@ var Crawler = function (params) {
 };
 
 var Page = function (url, isExternal) {
+	var page = this;
+
 	this.url = url || '';
 	this.urlData = urllib.parse(this.url);
 	this.html = '';
@@ -44,12 +49,23 @@ var Page = function (url, isExternal) {
 	this.type = 'text/html';
 	this.links = [];
 	this.isExternal = isExternal || false;
+	this._ph = {
+		exit: function () {}
+	};
+	this._phPage = {
+		evaluate: function (evaluate, callback) {
+			winston.error(page.PAGE_NOT_RENDERED_ERROR);
+			callback();
+		}
+	};
+	this.phWaits = [];
 
 	// Remove hash from URL
 	this.url = this.url.replace(/#.*/gi, '');
 };
 
 Page.prototype = {
+	PAGE_NOT_RENDERED_ERROR: 'Error: Page was not rendered.',
 	dom: function () {
 		var $;
 
@@ -70,8 +86,6 @@ Page.prototype = {
 		return $;
 	},
 	setHTML: function (html) {
-		/*global console */
-
 		var page = this;
 
 		this.html = html || '';
@@ -83,6 +97,29 @@ Page.prototype = {
 				page.links.push(urllib.resolve(page.url, href));
 			}
 		});
+	},
+	render: function (callback) {
+		var page = this;
+		callback(this._phPage, function (checkID) {
+			page.phExit(checkID);
+		});
+	},
+	phExit: function (checkID) {
+		// Find check ID
+		var index;
+
+		// Remove check ID from array
+		if (checkID) {
+			index = this.phWaits.indexOf(checkID);
+			if (index > -1) {
+				this.phWaits.splice(index, 1);
+			}
+		}
+
+		// If no other checks are present, close PhantomJS
+		if (this.phWaits.length === 0) {
+			this._ph.exit();
+		}
 	}
 };
 
@@ -91,6 +128,22 @@ Crawler.prototype = {
 		var baseURLData = urllib.parse(base);
 		var urlData = urllib.parse(url);
 		return urlData.protocol !== baseURLData.protocol || urlData.host !== baseURLData.host;
+	},
+	_renderPage: function (page, finish) {
+		phantom.create(function (ph) {
+			ph.createPage(function (phPage) {
+				phPage.open(page.url, function (status) {
+					if (status !== 'success') {
+						winston.error('Unable to render page: ' + page.url);
+					}
+
+					page._ph = ph;
+					page._phPage = phPage;
+
+					finish();
+				});
+			});
+		});
 	},
 	_responseSuccess: function (pageInfo, response, body, callback) {
 		/*jshint scripturl:true */
@@ -183,8 +236,19 @@ Crawler.prototype = {
 				'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
 			}
 		}, function (error, response, body) {
-			crawler._onResponse(pageInfo, error, response, body, finishCallback);
+			if (crawler.render === true) {
+				crawler._renderPage(pageInfo.page, function () {
+					done(error, response, body);
+				});
+				return false;
+			}
+
+			done(error, response, body);
 		});
+
+		function done(error, response, body) {
+			crawler._onResponse(pageInfo, error, response, body, finishCallback);
+		}
 	},
 	_processRedirect: function (pageInfo, finalURL, response) {
 		/*

@@ -24,6 +24,7 @@ describe('Crawler._crawlPage method', function () {
 		beforeEach(function () {
 			requestSpy = spyOn(crawler, '_request');
 			onResponseSpy = spyOn(crawler, '_onResponse');
+			spyOn(crawler, '_renderPage');
 			crawler.strictSSL = false;
 			crawler.timeout = 1000;
 			crawler._crawlPage(PAGE_INFO, function () {});
@@ -55,6 +56,25 @@ describe('Crawler._crawlPage method', function () {
 			// Execute the callback
 			requestSpy.calls[0].args[1]('arg1', 'arg2', 'arg3');
 			expect(onResponseSpy).toHaveBeenCalledWith(PAGE_INFO, 'arg1', 'arg2', 'arg3', jasmine.any(Function));
+		});
+
+		describe('when render is true', function () {
+
+			beforeEach(function () {
+				crawler.render = true;
+				requestSpy.calls[0].args[1]('arg1', 'arg2', 'arg3');
+			});
+
+			it('renders the page', function () {
+				expect(crawler._renderPage).toHaveBeenCalledWith(PAGE_INFO.page, jasmine.any(Function));
+			});
+
+			it('calls _onResponse *after* page is rendered', function () {
+				expect(crawler._onResponse).not.toHaveBeenCalled();
+				crawler._renderPage.calls[0].args[1]();
+				expect(crawler._onResponse).toHaveBeenCalled();
+			});
+		
 		});
 	
 	});

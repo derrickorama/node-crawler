@@ -16,7 +16,9 @@
   "dependencies": {
     "async": "~0.2.9",
     "cheerio": "~0.12.4",
-    "request": "git+https://github.com/derrickorama/request.git"
+    "request": "git+https://github.com/derrickorama/request.git",
+    "phantom": "^0.6.1",
+    "winston": "^0.7.3"
   },
   "license": "MIT",
   "main": "./crawler",

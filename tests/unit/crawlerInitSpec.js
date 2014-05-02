@@ -1,7 +1,7 @@
 var _ = require('underscore');
 var Crawler = require('../../crawler.js').Crawler;
 
-describe('Crawler', function () {
+describe('Crawler initialization', function () {
 
 	it('should have an empty pagesCrawled object by default', function () {
 		var crawler = new Crawler();
@@ -28,9 +28,19 @@ describe('Crawler', function () {
 		expect(crawler.excludePatterns).toEqual([]);
 	});
 
-	it('sets excludePatterns to an empty array', function () {
+	it('sets "excludePatterns" to the supplied "excludePatterns" value', function () {
 		var crawler = new Crawler({ excludePatterns: ['/some/pattern.*'] });
 		expect(crawler.excludePatterns).toEqual(['/some/pattern.*']);
+	});
+
+	it('sets "render" to false by default', function () {
+		var crawler = new Crawler();
+		expect(crawler.render).toBe(false);
+	});
+
+	it('sets "render" to the supplied "render" value', function () {
+		var crawler = new Crawler({ render: true });
+		expect(crawler.render).toBe(true);
 	});
 
 });
