@@ -1,4 +1,3 @@
-var urllib = require('url');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler requests feature', function () {

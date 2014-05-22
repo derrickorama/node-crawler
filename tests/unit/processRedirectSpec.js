@@ -1,7 +1,5 @@
 var urllib = require('url');
-var _ = require('underscore');
 var Crawler = require('../../crawler.js').Crawler;
-var Page = require('../../crawler.js').Page;
 
 describe('Crawler._processRedirect method', function () {
 	var pageInfo, finalURL, response;
@@ -27,6 +25,7 @@ describe('Crawler._processRedirect method', function () {
 			return mockURLData;
 		});
 		onRedirectSpy = spyOn(crawler, 'onRedirect');
+		spyOn(crawler, '_wasCrawled');
 	});
 
 	it('parses the finalURL', function () {
@@ -38,11 +37,7 @@ describe('Crawler._processRedirect method', function () {
 		var result;
 	
 		beforeEach(function () {
-			crawler._pages = {
-				'http://www.google.com/': {
-					url: 'http://www.google.com/'
-				}
-			};
+			crawler._wasCrawled.andReturn(true);
 			result = crawler._processRedirect(pageInfo, finalURL);
 		});
 
@@ -56,14 +51,20 @@ describe('Crawler._processRedirect method', function () {
 		var result;
 	
 		beforeEach(function () {
-			crawler._pages = {};
+			crawler._wasCrawled.andReturn(false);
 			result = crawler._processRedirect(pageInfo, finalURL);
 		});
 
-		it('returns new pageInfo object', function () {
+		it('returns pageInfo object', function () {
 			crawler._pages = {};
 			var result = crawler._processRedirect(pageInfo, finalURL);
 			expect(result).toEqual(pageInfo);
+		});
+
+		it('returns updated pageInfo when a redirect occurs', function () {
+			pageInfo.page.url = 'http://domain.com/redirected';
+			var result = crawler._processRedirect(pageInfo, finalURL);
+			expect(result.page.url).toBe(finalURL);
 		});
 
 		it('adds the parsed URL to the _urlsCrawled property', function () {
@@ -77,13 +78,13 @@ describe('Crawler._processRedirect method', function () {
 
 		it('sends onRedirect the pageInfo.page and response', function () {
 			crawler._processRedirect(pageInfo, finalURL, response);
-			expect(onRedirectSpy).toHaveBeenCalledWith(pageInfo.page, response);
+			expect(onRedirectSpy).toHaveBeenCalledWith(pageInfo.page, response, finalURL);
 		});
 
 		it('preserves redirect\'s page url for onRedirect method', function (done) {
 			pageInfo.page.url = 'http://domain.com/redirected';
 
-			onRedirectSpy.andCallFake(function (page, response) {
+			onRedirectSpy.andCallFake(function (page) {
 				setTimeout(function () {
 					expect(page.url).toBe('http://domain.com/redirected');
 					done();
@@ -91,50 +92,6 @@ describe('Crawler._processRedirect method', function () {
 			});
 
 			crawler._processRedirect(pageInfo, finalURL, response);
-		});
-
-		describe('record in crawler pages', function () {
-		
-			beforeEach(function () {
-				crawler._pages = {
-					'http://www.google.com/': {
-						url: 'http://www.google.com/'
-					}
-				};
-				pageInfo = {
-					page: {
-						url: 'http://www.google.com/',
-						redirects: []
-					},
-					whatever: true
-				};
-				mockURLData = {
-					href: 'http://finalurl.com/'
-				};
-				crawler._processRedirect(pageInfo, finalURL, response);
-			});
-
-			it('is updated with parsed finalURL key', function () {
-				expect(_.keys(crawler._pages).length).toBe(1);
-				expect(crawler._pages.hasOwnProperty('http://finalurl.com/')).toBe(true);
-			});
-
-			it('is updated with parsed finalURL key', function () {
-				expect(crawler._pages['http://finalurl.com/'].page.url).toBe('http://finalurl.com/');
-			});
-
-			it('is clones the keys in the pageInfo argument', function () {
-				expect(_.keys(crawler._pages['http://finalurl.com/'])).toEqual(['page', 'whatever']);
-			});
-
-			it('is updated with parsed finalURL key', function () {
-				expect(crawler._pages['http://finalurl.com/'].page.url).toBe('http://finalurl.com/');
-			});
-
-			it('is updated with the additional redirect', function () {
-				expect(crawler._pages['http://finalurl.com/'].page.redirects).toEqual(['http://www.google.com/']);
-			});
-		
 		});
 	
 	});

@@ -31,7 +31,7 @@ module.exports = function(grunt) {
         }
       },
       specs: {
-        src: 'tests/*.js',
+        src: 'tests/**/*.js',
         options: {
           node: true,
           globals: {
@@ -41,7 +41,8 @@ module.exports = function(grunt) {
             it: true,
             jasmine: true,
             setTimeout: true,
-            spyOn: true
+            spyOn: true,
+            afterEach: true
           }
         }
       }

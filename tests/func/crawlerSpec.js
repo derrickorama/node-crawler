@@ -2,10 +2,6 @@ var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler link crawling feature', function () {
 
-	var mockResponse = function (params, callback) {
-		callback(null, { statusCode: 200, req: { method: 'GET' } }, '');
-	};
-
 	var BASIC_LINK_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/basic-link-crawl.html',
 		NON_PAGE_URLS_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/non-page-urls.html',
 		EXTERNAL_URL_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/external-link-page.html',

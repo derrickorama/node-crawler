@@ -1,5 +1,4 @@
 var Crawler = require('../../crawler.js').Crawler;
-var Page = require('../../crawler.js').Page;
 
 describe('Crawler._onResponse method', function () {
 	var body;
@@ -71,6 +70,8 @@ describe('Crawler._onResponse method', function () {
 	});
 
 	describe('- on redirect -', function () {
+		var response;
+		var result;
 
 		beforeEach(function () {
 			pageInfo.page.url = 'http://www.google.com/';
@@ -125,7 +126,6 @@ describe('Crawler._onResponse method', function () {
 
 	describe('on 200 response', function () {
 		var response;
-		var callback;
 		
 		beforeEach(function () {
 			response = {
@@ -156,7 +156,6 @@ describe('Crawler._onResponse method', function () {
 
 	describe('on non 200 response', function () {
 		var response;
-		var callback;
 		
 		beforeEach(function () {
 			response = {
@@ -179,7 +178,6 @@ describe('Crawler._onResponse method', function () {
 
 	describe('on error', function () {
 		var response;
-		var callback;
 		
 		beforeEach(function () {
 			response = {

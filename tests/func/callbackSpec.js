@@ -1,5 +1,4 @@
 var http = require('http');
-var _ = require('underscore');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler callbacks feature', function () {

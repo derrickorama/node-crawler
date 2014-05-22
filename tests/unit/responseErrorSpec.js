@@ -1,5 +1,4 @@
 var Crawler = require('../../crawler.js').Crawler;
-var Page = require('../../crawler.js').Page;
 
 describe('Crawler._responseError method', function () {
 	var crawler;

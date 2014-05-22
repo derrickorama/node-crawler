@@ -1,10 +1,10 @@
 var async = require('async');
 var urllib = require('url');
 var cheerio = require('cheerio');
-var _ = require('underscore');
 var phantom = require('phantom');
 var request = require('request');
 var winston = require('winston');
+var _ = require('underscore');
 
 var Crawler = function (params) {
 	if (typeof params !== 'object') {
@@ -16,7 +16,6 @@ var Crawler = function (params) {
 	// Private properties
 	this._crawlExternal = params.crawlExternal || false;
 	this._killed = false;
-	this._pages = {};
 	this._urlsCrawled = [];
 	this._queue = async.queue(function (page, callback) {
 		crawler._crawlPage(page, callback);
@@ -257,34 +256,27 @@ Crawler.prototype = {
 		var cleanFinalURL = urllib.parse(finalURL).href;
 		var wasAdded = false;
 
-		// // Determine if page was already added
-		if (this._pages.hasOwnProperty(cleanFinalURL) === true) {
+		// Determine if page URL was queued
+		if (this._wasCrawled(cleanFinalURL) === false) {
+			this._urlsCrawled.push(cleanFinalURL); // Add URL to URLs crawled
+		} else {
 			wasAdded = true;
 		}
 
-		// // Determine if page URL was queued
-		if (this._urlsCrawled.indexOf(cleanFinalURL) < 0) {
-			this._urlsCrawled.push(cleanFinalURL); // Add URL to URLs crawled
-		}
+		// Handle redirected page
+		this.onRedirect(_.clone(pageInfo.page), response, finalURL);
 
-		// // Handle redirected page
-		this.onRedirect(_.clone(pageInfo.page), response);
+		// Update page info
+		pageInfo.page.redirects.push(pageInfo.page.url); // Save redirect
+		pageInfo.page.url = cleanFinalURL;
 
-		// // Delete redirect record from pages object
-		delete this._pages[pageInfo.page.url];
-
-		// // Update page info
-		this._pages[cleanFinalURL] = _.clone(pageInfo);
-		this._pages[cleanFinalURL].page.redirects.push(pageInfo.page.url); // Add redirected page
-		this._pages[cleanFinalURL].page.url = cleanFinalURL;
-
-		// // If page was already added/queued, skip the processing
+		// If page was already added/queued, skip the processing
 		if (wasAdded === true) {
 			return null;
 		}
 
-		// // Update pageInfo so that it's processing the page it was redirected to and not the redirect
-		return this._pages[cleanFinalURL];
+		// Update pageInfo so that it's processing the page it was redirected to and not the redirect
+		return pageInfo;
 	},
 	_onResponse: function (pageInfo, error, response, body, finishCallback) {
 		// If the crawler was killed before this request was ready, finish the process
@@ -377,14 +369,13 @@ Crawler.prototype = {
 		}
 		
 		// Add page to list of pages
-		this._pages[url] = {
-			page: new Page(url, isExternal),
-			crawlLinks: isExternal !== true
-		};
 		this._urlsCrawled.push(url);
 
 		// Add to async queue
-		this._queue.push(this._pages[url], function () {
+		this._queue.push({
+			page: new Page(url, isExternal),
+			crawlLinks: isExternal !== true
+		}, function () {
 			crawler._asyncQueueCallback.apply(crawler, arguments);
 		});
 

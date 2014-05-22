@@ -39,7 +39,7 @@ describe('Page.dom method', function () {
 		});
 
 		it('returns the DOM from cheerio', function () {
-			var cheerioSpy = spyOn(cheerio, 'load').andReturn('here\'s your DOM');
+			spyOn(cheerio, 'load').andReturn('here\'s your DOM');
 			var result = page.dom();
 			expect(result).toBe('here\'s your DOM');
 		});
@@ -66,7 +66,7 @@ describe('Page.dom method', function () {
 		});
 
 		it('returns the DOM from cheerio', function () {
-			var cheerioSpy = spyOn(cheerio, 'load').andReturn('here\'s your DOM');
+			spyOn(cheerio, 'load').andReturn('here\'s your DOM');
 			var result = page.dom();
 			expect(result).toBe('here\'s your DOM');
 		});

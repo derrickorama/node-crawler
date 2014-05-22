@@ -1,4 +1,3 @@
-var _ = require('underscore');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler queue', function () {
