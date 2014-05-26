@@ -4,7 +4,6 @@
 	var Crawler = require('./crawler.js').Crawler;
 
 	var url = argv._[0];
-	var useHEAD = false;
 
 	console.log('Checking URL: ' + url);
 	console.log('==============' + url.replace(/./gi, '='));
@@ -85,19 +84,8 @@
 		Settings.showMe('status-codes');
 	}
 
-	// Check for HEAD method
-	if (argv['head']) {
-		useHEAD = true;
-	}
-
-	if (useHEAD === true) {
-		console.log(' -> using HEAD request');
-	} else {
-		console.log(' -> using GET request');
-	}
-
 	console.log('');
 
 	var crawler = new Crawler(Settings.callbacks);
-	crawler.queue(url, false, useHEAD);
+	crawler.queue(url, false);
 }());

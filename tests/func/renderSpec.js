@@ -1,4 +1,5 @@
 var http = require('http');
+var winston = require('winston');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler page rendering', function () {
@@ -12,6 +13,7 @@ describe('Crawler page rendering', function () {
             res.setHeader('Content-Type', 'text/html');
             res.end(responseBody);
         }).listen(6767);
+        spyOn(winston, 'log'); // silence winston
     });
 
     afterEach(function () {

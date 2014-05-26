@@ -37,6 +37,7 @@ describe('Crawler.headerCheck method', function () {
             path: page.urlData.path,
             method: 'GET',
             headers: {
+                'host': jasmine.any(String),
                 'User-Agent': jasmine.any(String)
             }
         }, jasmine.any(Function));
@@ -53,6 +54,7 @@ describe('Crawler.headerCheck method', function () {
             path: page.urlData.path,
             method: 'GET',
             headers: {
+                'host': jasmine.any(String),
                 'User-Agent': jasmine.any(String)
             }
         }, jasmine.any(Function));

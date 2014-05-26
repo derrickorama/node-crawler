@@ -8,6 +8,8 @@ var request = require('request');
 var winston = require('winston');
 var _ = require('underscore');
 
+var USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36';
+
 var Crawler = function (params) {
 	if (typeof params !== 'object') {
 		params = {};
@@ -239,7 +241,8 @@ Crawler.prototype = {
 				port: urlData.port,
 				path: urlData.path,
 				headers: {
-					'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
+					'host': '',
+					'User-Agent': USER_AGENT
 				}
 			}, function (res) {
 				req.abort(); // Abort request, we just wanted the headers
@@ -310,7 +313,7 @@ Crawler.prototype = {
 				strictSSL: crawler.strictSSL,
 				jar: crawler.acceptCookies ? request.jar() : false,
 				headers: {
-					'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
+					'User-Agent': USER_AGENT
 				}
 			}, function (error, response, body) {
 

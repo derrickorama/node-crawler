@@ -99,7 +99,7 @@ describe('Crawler requests feature', function () {
 		crawler.queue('http://domain.com');
 	});
 
-	it('follows redirects', function () {
+	it('follows redirects', function (done) {
 		
 		var crawler = new Crawler({
 			onPageCrawl: function (page, response) {
