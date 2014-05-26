@@ -18,7 +18,8 @@
     "cheerio": "^0.12.4",
     "request": "git+https://github.com/derrickorama/request.git",
     "phantom": "^0.6.1",
-    "winston": "^0.7.3"
+    "winston": "^0.7.3",
+    "tough-cookie": "^0.12.1"
   },
   "license": "MIT",
   "main": "./crawler",

@@ -1,10 +1,11 @@
-var async = require('async');
 var http = require('http');
 var https = require('https');
 var urllib = require('url');
+var async = require('async');
 var cheerio = require('cheerio');
 var phantom = require('phantom');
 var request = require('request');
+var tough = require('tough-cookie');
 var winston = require('winston');
 var _ = require('underscore');
 
@@ -221,8 +222,9 @@ Crawler.prototype = {
 
 		return false;
 	},
-	headerCheck: function (page, callback, urlOverride) {
+	headerCheck: function (page, callback, urlOverride, existingJar) {
 		var crawler = this;
+		var cookiejar = existingJar || new tough.CookieJar();
 		var requestFunc = http;
 		var urlData = urlOverride || page.urlData;
 		var error = null;
@@ -240,8 +242,9 @@ Crawler.prototype = {
 				host: urlData.hostname,
 				port: urlData.port,
 				path: urlData.path,
+				rejectUnauthorized: false,
 				headers: {
-					'host': '',
+					'cookie': cookiejar.getCookiesSync(urlData.href).join('; '),
 					'User-Agent': USER_AGENT
 				}
 			}, function (res) {
@@ -253,7 +256,13 @@ Crawler.prototype = {
 					res.statusCode.toString().indexOf('30') === 0 &&
 					res.headers.location
 				) {
-					crawler.headerCheck(page, callback, urllib.parse(urllib.resolve(page.url, res.headers.location)));
+					// Save cookies
+					_.each(res.headers['set-cookie'], function (cookie) {
+						cookiejar.setCookieSync(cookie, urlData.href);
+					});
+
+					// Re-check headers
+					crawler.headerCheck(page, callback, urllib.parse(urllib.resolve(page.url, res.headers.location)), cookiejar);
 					return;
 				}
 

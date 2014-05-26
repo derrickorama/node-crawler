@@ -36,8 +36,9 @@ describe('Crawler.headerCheck method', function () {
             port: page.urlData.port,
             path: page.urlData.path,
             method: 'GET',
+            rejectUnauthorized: false,
             headers: {
-                'host': jasmine.any(String),
+                'cookie': jasmine.any(String),
                 'User-Agent': jasmine.any(String)
             }
         }, jasmine.any(Function));
@@ -53,8 +54,9 @@ describe('Crawler.headerCheck method', function () {
             port: page.urlData.port,
             path: page.urlData.path,
             method: 'GET',
+            rejectUnauthorized: false,
             headers: {
-                'host': jasmine.any(String),
+                'cookie': jasmine.any(String),
                 'User-Agent': jasmine.any(String)
             }
         }, jasmine.any(Function));
