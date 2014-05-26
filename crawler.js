@@ -219,11 +219,13 @@ Crawler.prototype = {
 
 		return false;
 	},
-	headerCheck: function (page, callback) {
+	headerCheck: function (page, callback, urlOverride) {
+		var crawler = this;
 		var requestFunc = http;
-		var urlData = page.urlData;
+		var urlData = urlOverride || page.urlData;
 		var error = null;
 		var called = false;
+		var errorCallbackTimeout;
 
 		if (urlData.protocol === 'https:') {
 			requestFunc = https;
@@ -232,12 +234,25 @@ Crawler.prototype = {
 		try {
 			var req = requestFunc.request({
 				method: 'GET',
-				protocol: page.urlData.protocol,
-				host: page.urlData.hostname,
-				port: page.urlData.port,
-				path: page.urlData.path
+				protocol: urlData.protocol,
+				host: urlData.hostname,
+				port: urlData.port,
+				path: urlData.path,
+				headers: {
+					'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
+				}
 			}, function (res) {
 				req.abort(); // Abort request, we just wanted the headers
+				clearTimeout(errorCallbackTimeout);
+
+				if (
+					res.statusCode &&
+					res.statusCode.toString().indexOf('30') === 0 &&
+					res.headers.location
+				) {
+					crawler.headerCheck(page, callback, urllib.parse(urllib.resolve(page.url, res.headers.location)));
+					return;
+				}
 
 				// Update page.type
 				if (typeof res === 'object' && typeof res.headers === 'object' && res.headers.hasOwnProperty('content-type') === true) {
@@ -254,7 +269,7 @@ Crawler.prototype = {
 		if (req) {
 			req.on('error', function (err) {
 				error = err;
-				setTimeout(function () {
+				errorCallbackTimeout = setTimeout(function () {
 					if (called === false) {
 						callback(error, page);
 					}

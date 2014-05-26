@@ -35,7 +35,10 @@ describe('Crawler.headerCheck method', function () {
             host: page.urlData.hostname,
             port: page.urlData.port,
             path: page.urlData.path,
-            method: 'GET'
+            method: 'GET',
+            headers: {
+                'User-Agent': jasmine.any(String)
+            }
         }, jasmine.any(Function));
         expect(mockRequest.end).toHaveBeenCalled();
     });
@@ -48,7 +51,10 @@ describe('Crawler.headerCheck method', function () {
             host: page.urlData.hostname,
             port: page.urlData.port,
             path: page.urlData.path,
-            method: 'GET'
+            method: 'GET',
+            headers: {
+                'User-Agent': jasmine.any(String)
+            }
         }, jasmine.any(Function));
         expect(mockRequest.end).toHaveBeenCalled();
     });
@@ -86,19 +92,32 @@ describe('Crawler.headerCheck method', function () {
         expect(callback).toHaveBeenCalledWith(null, page, mockResponse);
     });
 
-    it('executes callback on error', function (done) {
+    it('executes callback on error with no response', function (done) {
         mockRequest.on.andCallFake(function (event, callback) {
             callback('some error');
         });
         crawler.headerCheck(page, callback);
+        http.request.calls[0].args[1](mockResponse);
 
         // Mock asynchronous behavior
         setTimeout(function () {
-            http.request.calls[0].args[1](mockResponse);
             expect(callback).toHaveBeenCalledWith('some error', page, mockResponse);
             done();
-        });
+        }, 5);
+    });
 
+    it('does not execute callback twice when error occurs and response is sent', function (done) {
+        mockRequest.on.andCallFake(function (event, callback) {
+            callback('some error');
+        });
+        crawler.headerCheck(page, callback);
+        http.request.calls[0].args[1](mockResponse);
+
+        // Mock asynchronous behavior
+        setTimeout(function () {
+            expect(callback.calls.length).toBe(1);
+            done();
+        });
     });
 
 });
