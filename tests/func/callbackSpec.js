@@ -1,4 +1,5 @@
 var http = require('http');
+var winston = require('winston');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler callbacks feature', function () {
@@ -12,6 +13,10 @@ describe('Crawler callbacks feature', function () {
 	var mockFailResponse = function (params, callback) {
 		callback(null, { statusCode: 400, req: { method: 'GET' } }, '');
 	};
+
+	beforeEach(function () {
+		spyOn(winston, 'error'); // silence winston
+	});
 
 	/*
 	| Defaults
@@ -166,7 +171,7 @@ describe('Crawler callbacks feature', function () {
 			callback('error!', undefined, undefined);
 		});
 
-		crawler.queue('whatev');
+		crawler.queue('http://domain.com/whatev');
 	});
 
 	it('does not consider parse errors on external URLs as errors if there\'s a content-length header and the status code is 200', function (done) {
@@ -174,10 +179,11 @@ describe('Crawler callbacks feature', function () {
 		var server;
 
 		var crawler = new Crawler({
-			onPageCrawl: function () {
+			onPageCrawl: function (page) {
 				pagesCrawled++;
 			},
-			onError: function () {
+			onError: function (page, error) {
+				console.log(error);
 				console.log('Parse error not caught!');
 			},
 			onDrain: function () {
@@ -192,7 +198,7 @@ describe('Crawler callbacks feature', function () {
 		var realRequest = crawler._request;
 		var mockRequest = function (params, callback) {
 			if (params.url === 'http://domain.com/') {
-				callback(null, { statusCode: 200 }, '<a href="http://localhost:6767/">external link</a>');
+				callback(null, { statusCode: 200, headers: { 'content-type': 'text/html' } }, '<a href="http://localhost:6767/">external link</a>');
 			} else {
 				realRequest(params, callback);
 			}
@@ -200,11 +206,12 @@ describe('Crawler callbacks feature', function () {
 		crawler._request = mockRequest;
 
 		server = http.createServer(function (req, res) {
-			res.writeHead(200, { 'Content-Length': '4' });
-			res.end('Hello');
-		}).listen(6767, 'localhost');
+			res.writeHead(200, { 'Content-Length': '4', 'Content-Type': 'text/html' });
+			res.end('<a href="/bad-link">link</a>');
+		}).listen(6767);
 
 		crawler.queue('http://domain.com/');
+
 	});
 
 	/*
@@ -244,17 +251,13 @@ describe('Crawler callbacks feature', function () {
 		var crawler = new Crawler({
 			onError: function (page, error, response) {
 				expect(page.url).toBe('avascript:/');
-				expect(error.message).toBe('error!');
+				expect(error.message).toBe('Protocol:avascript: not supported.');
 				expect(response).toEqual({ req: {} });
 			},
 			onDrain: function () {
 				done();
 			},
 			crawlExternal: true
-		});
-
-		spyOn(crawler, '_request').andCallFake(function (params, callback) {
-			callback({ message: 'error!' }, 'some response', 'some body');
 		});
 
 		crawler.queue('avascript:/');

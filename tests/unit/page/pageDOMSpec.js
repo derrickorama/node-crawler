@@ -10,6 +10,7 @@ describe('Page.dom method', function () {
 
 	it('loads nothing when first cheerio load results in undefined (e.g. when an error occurs)', function () {
 		var cheerioSpy = spyOn(cheerio, 'load').andReturn(undefined);
+		page.type = 'text/html';
 		page.dom();
 		expect(cheerioSpy.calls.length).toBe(2);
 		expect(cheerioSpy.calls[1].args[0]).toBe('');

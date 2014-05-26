@@ -20,11 +20,6 @@ describe('Crawler._responseSuccess method', function () {
 		response = { headers: { 'content-type': 'text/html' } };
 	});
 
-	it('sets page.type to what\'s defined in the Content-Type of the response headers', function () {
-		crawler._responseSuccess(pageInfo, { headers: { 'content-type': 'application/pdf' } }, '', callback);
-		expect(pageInfo.page.type).toBe('application/pdf');
-	});
-
 	it('updates the pages HTML with what returns in the "body"', function () {
 		crawler._responseSuccess(pageInfo, response, '<span>I am HTML</span>', callback);
 		expect(setHTMLSpy).toHaveBeenCalledWith('<span>I am HTML</span>');

@@ -37,6 +37,7 @@ describe('API: tracking redirects', function () {
 
         server = http.createServer(function (req, res) {
             var status = 200;
+            res.setHeader('Content-Type', 'text/html');
 
             if (req.url.indexOf('/redirect') > -1) {
                 status = 301;

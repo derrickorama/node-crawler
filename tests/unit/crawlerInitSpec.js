@@ -1,7 +1,12 @@
+var async = require('async');
 var _ = require('underscore');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler initialization', function () {
+
+	beforeEach(function () {
+		spyOn(async, 'queue').andReturn({});
+	});
 
 	it('should have an empty pagesCrawled object by default', function () {
 		var crawler = new Crawler();
@@ -41,6 +46,21 @@ describe('Crawler initialization', function () {
 	it('sets "render" to the supplied "render" value', function () {
 		var crawler = new Crawler({ render: true });
 		expect(crawler.render).toBe(true);
+	});
+
+	it('sets "workers" to 4 by default', function () {
+		var crawler = new Crawler();
+		expect(crawler.workers).toBe(4);
+	});
+
+	it('sets "workers" to the supplied "workers" value', function () {
+		var crawler = new Crawler({ workers: 6 });
+		expect(crawler.workers).toBe(6);
+	});
+
+	it('supplies async.queue with the # of workers specified', function () {
+		var crawler = new Crawler({ workers: 6 });
+		expect(async.queue).toHaveBeenCalledWith(jasmine.any(Function), 6);
 	});
 
 });

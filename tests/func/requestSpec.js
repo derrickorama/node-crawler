@@ -74,4 +74,28 @@ describe('Crawler requests feature', function () {
 		expect(crawler.retries).toBe(1);
 	});
 
+	/*
+	| Actual request
+	*/
+
+	it('does not download contents of non-text content-types', function (done) {
+
+		var crawler = new Crawler({
+			onPageCrawl: function (page, response) {
+				expect(page.html).toBe('');
+			},
+			onDrain: function () {
+				done();
+			}
+		});
+
+		spyOn(crawler, '_request').andCallFake(function (params, callback) {
+			callback(null, {
+				type: 'application/pdf'
+			}, 'some body');
+		});
+
+		crawler.queue('http://domain.com');
+	});
+
 });

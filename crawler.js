@@ -1,4 +1,6 @@
 var async = require('async');
+var http = require('http');
+var https = require('https');
 var urllib = require('url');
 var cheerio = require('cheerio');
 var phantom = require('phantom');
@@ -17,9 +19,10 @@ var Crawler = function (params) {
 	this._crawlExternal = params.crawlExternal || false;
 	this._killed = false;
 	this._urlsCrawled = [];
+	this.workers = params.workers || 4;
 	this._queue = async.queue(function (page, callback) {
 		crawler._crawlPage(page, callback);
-	}, 4);
+	}, this.workers);
 
 	// Public properties
 	this.acceptCookies = params.acceptCookies !== undefined ? params.acceptCookies : true;
@@ -45,7 +48,7 @@ var Page = function (url, isExternal) {
 	this.urlData = urllib.parse(this.url);
 	this.html = '';
 	this.redirects = [];
-	this.type = 'text/html';
+	this.type = '';
 	this.links = [];
 	this.isExternal = isExternal || false;
 	this._ph = {
@@ -154,11 +157,6 @@ Crawler.prototype = {
 			pageLink,
 			pageLinksLength;
 
-		// Update page.type
-		if (typeof response === 'object' && typeof response.headers === 'object' && response.headers.hasOwnProperty('content-type') === true) {
-			page.type = response.headers['content-type'].replace(/;.*/g, '').replace(/(^\s+|\s+$)/g, '');
-		}
-
 		// Update HTML
 		page.setHTML(body);
 
@@ -221,28 +219,95 @@ Crawler.prototype = {
 
 		return false;
 	},
+	headerCheck: function (page, callback) {
+		var requestFunc = http;
+		var urlData = page.urlData;
+		var error = null;
+		var called = false;
+
+		if (urlData.protocol === 'https:') {
+			requestFunc = https;
+		}
+
+		try {
+			var req = requestFunc.request({
+				method: 'GET',
+				protocol: page.urlData.protocol,
+				host: page.urlData.hostname,
+				port: page.urlData.port,
+				path: page.urlData.path
+			}, function (res) {
+				req.abort(); // Abort request, we just wanted the headers
+
+				// Update page.type
+				if (typeof res === 'object' && typeof res.headers === 'object' && res.headers.hasOwnProperty('content-type') === true) {
+					page.type = res.headers['content-type'].replace(/;.*/g, '').replace(/(^\s+|\s+$)/g, '');
+				}
+
+				called = true;
+				callback(error, page, res);
+			});
+		} catch (e) {
+			callback(e, page);
+		}
+
+		if (req) {
+			req.on('error', function (err) {
+				error = err;
+				setTimeout(function () {
+					if (called === false) {
+						callback(error, page);
+					}
+				});
+			});
+
+			req.end();
+		}
+	},
 	_request: request,
 	_crawlPage: function (pageInfo, finishCallback) {
-		var crawler = this,
-			page = pageInfo.page;
+		var crawler = this;
+		var page = pageInfo.page;
+		var COMMON_MEDIA_EXT = /\.(?:3gp|aif|asf|asx|avi|flv|iff|m3u|m4a|m4p|m4v|mov|mp3|mp4|mpa|mpg|mpeg|ogg|ra|raw|rm|swf|vob|wav|wma|wmv)$/;
 
-		this._request({
-			url: page.url,
-			timeout: this.timeout,
-			strictSSL: this.strictSSL,
-			jar: this.acceptCookies ? request.jar() : false,
-			headers: {
-				'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
-			}
-		}, function (error, response, body) {
-			if (crawler.render === true) {
-				crawler._renderPage(pageInfo.page, function () {
-					done(error, response, body);
-				});
+		// Check headers for content-type
+		this.headerCheck(page, function (error, page, res) {
+
+			// Do not download non-text documents
+			if (
+				page.type.indexOf('text/') < 0 ||
+				error ||
+				// Eliminate common file extensions that do not have the correct content-type
+				page.type.indexOf('text/') > -1 && COMMON_MEDIA_EXT.test(page.url) === true
+			) {
+				if (error) {
+					winston.error('Failed on: ' + page.url);
+					winston.error(error.message);
+				}
+				done(error, res, '');
 				return false;
 			}
 
-			done(error, response, body);
+			// Perform actual request
+			crawler._request({
+				url: page.url,
+				timeout: crawler.timeout,
+				strictSSL: crawler.strictSSL,
+				jar: crawler.acceptCookies ? request.jar() : false,
+				headers: {
+					'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
+				}
+			}, function (error, response, body) {
+
+				if (crawler.render === true) {
+					crawler._renderPage(pageInfo.page, function () {
+						done(error, response, body);
+					});
+					return false;
+				}
+
+				done(error, response, body);
+			});
 		});
 
 		function done(error, response, body) {

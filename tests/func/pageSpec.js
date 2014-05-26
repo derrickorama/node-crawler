@@ -33,9 +33,9 @@ describe('Crawler page', function () {
 		expect(page.redirects).toEqual([]);
 	});
 
-	it('should have a default type of text/html', function () {
+	it('should have a default type of ""', function () {
 		var page = new Page();
-		expect(page.type).toBe('text/html');
+		expect(page.type).toBe('');
 	});
 
 	it('sets the isExternal property to false when nothing is supplied', function () {
@@ -89,6 +89,7 @@ describe('Crawler page', function () {
 
 	it('should load the HTML into a DOM-like environment (like jQuery)', function () {
 		var page = new Page('http://www.google.com/');
+		page.type = 'text/html';
 		page.setHTML('<html><div id="myID">the text</div></html>');
 		expect(_.isObject(page.dom())).toBe(true);
 		expect(page.dom()('#myID').length).toBe(1);
@@ -105,6 +106,7 @@ describe('Crawler page', function () {
 
 	it('should clear all links when new HTML is set', function () {
 		var page = new Page('http://www.google.com/');
+		page.type = 'text/html';
 
 		page.setHTML('<a href="http://google.com">link</a>');
 		page.setHTML('<a href="http://google.com">link</a>');
@@ -115,6 +117,7 @@ describe('Crawler page', function () {
 
 	it('should save all links on a page', function () {
 		var page = new Page('http://www.google.com/');
+		page.type = 'text/html';
 		page.setHTML('<a href="http://google.com">link</a>');
 
 		expect(page.links.length).toBe(1);
@@ -123,16 +126,19 @@ describe('Crawler page', function () {
 
 	it('should save relative links as a full, resolved path', function () {
 		var page = new Page('http://www.google.com/');
+		page.type = 'text/html';
 		page.setHTML('<a href="/I-am-relative">link</a>');
 		expect(page.links.length).toBe(1);
 		expect(page.links.indexOf('http://www.google.com/I-am-relative')).toBeGreaterThan(-1);
 
 		page = new Page('http://www.google.com/section/');
+		page.type = 'text/html';
 		page.setHTML('<a href="I-am-relative">link</a>');
 		expect(page.links.length).toBe(1);
 		expect(page.links.indexOf('http://www.google.com/section/I-am-relative')).toBeGreaterThan(-1);
 
 		page = new Page('http://www.google.com/sibling');
+		page.type = 'text/html';
 		page.setHTML('<a href="I-am-relative">link</a>');
 		expect(page.links.length).toBe(1);
 		expect(page.links.indexOf('http://www.google.com/I-am-relative')).toBeGreaterThan(-1);

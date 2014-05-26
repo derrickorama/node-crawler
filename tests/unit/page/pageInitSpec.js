@@ -33,9 +33,9 @@ describe('Page instantiation', function () {
         expect(page.redirects).toEqual([]);
     });
 
-    it('sets "type" to to "text/html"', function () {
+    it('sets "type" to to ""', function () {
         var page = new Page();
-        expect(page.type).toBe('text/html');
+        expect(page.type).toBe('');
     });
 
     it('sets "links" to an empty array', function () {

@@ -9,6 +9,7 @@ describe('Crawler page rendering', function () {
     beforeEach(function () {
         crawler = new Crawler();
         server = http.createServer(function (req, res) {
+            res.setHeader('Content-Type', 'text/html');
             res.end(responseBody);
         }).listen(6767);
     });
