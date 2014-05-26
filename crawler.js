@@ -230,13 +230,14 @@ Crawler.prototype = {
 		var error = null;
 		var called = false;
 		var errorCallbackTimeout;
+		var req;
 
 		if (urlData.protocol === 'https:') {
 			requestFunc = https;
 		}
 
 		try {
-			var req = requestFunc.request({
+			req = requestFunc.request({
 				method: 'GET',
 				protocol: urlData.protocol,
 				host: urlData.hostname,

@@ -179,7 +179,7 @@ describe('Crawler callbacks feature', function () {
 		var server;
 
 		var crawler = new Crawler({
-			onPageCrawl: function (page) {
+			onPageCrawl: function () {
 				pagesCrawled++;
 			},
 			onError: function (page, error) {

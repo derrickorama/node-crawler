@@ -1,5 +1,4 @@
 var http = require('http');
-var tough = require('tough-cookie');
 var _ = require('underscore');
 var Crawler = require('../../crawler.js').Crawler;
 
@@ -60,7 +59,7 @@ describe('Crawler cookie support', function () {
 
 	it('supports cookies in header check', function (done) {
 		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
+			onPageCrawl: function () {
 			},
 			onDrain: function () {
 				server.close();
@@ -70,6 +69,7 @@ describe('Crawler cookie support', function () {
 
 		var server = http.createServer(function (req, res) {
 			var status = 200;
+			var responseBody = '';
 			res.setHeader('Content-Type', 'text/html');
 			res.setHeader('Set-Cookie', 'cookie=test');
 

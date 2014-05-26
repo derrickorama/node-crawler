@@ -59,7 +59,7 @@ describe('Crawler initialization', function () {
 	});
 
 	it('supplies async.queue with the # of workers specified', function () {
-		var crawler = new Crawler({ workers: 6 });
+		new Crawler({ workers: 6 });
 		expect(async.queue).toHaveBeenCalledWith(jasmine.any(Function), 6);
 	});
 

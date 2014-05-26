@@ -82,7 +82,7 @@ describe('Crawler requests feature', function () {
 	it('does not download contents of non-text content-types', function (done) {
 
 		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
+			onPageCrawl: function (page) {
 				expect(page.html).toBe('');
 			},
 			onDrain: function () {
@@ -102,7 +102,7 @@ describe('Crawler requests feature', function () {
 	it('follows redirects', function (done) {
 		
 		var crawler = new Crawler({
-			onPageCrawl: function (page, response) {
+			onPageCrawl: function (page) {
 				expect(page.url).toBe('http://localhost:6767/final');
 			},
 			onDrain: function () {
@@ -113,6 +113,7 @@ describe('Crawler requests feature', function () {
 
 		var server = http.createServer(function (req, res) {
             var status = 200;
+            var responseBody = '';
             res.setHeader('Content-Type', 'text/html');
 
             if (req.url.indexOf('/redirect') > -1) {
