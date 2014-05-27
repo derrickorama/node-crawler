@@ -24,18 +24,6 @@ describe('Crawler requests feature', function () {
 		expect(crawler.retries).toBe(0);
 	});
 
-	it('should use the dummy user agent string by default for any request', function (done) {
-		var crawler = new Crawler({
-			crawlExternal: true,
-			onPageCrawl: function (page, response) {
-				expect(response.request.headers['User-Agent']).toBe('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36');
-				done();
-			}
-		});
-
-		crawler.queue('https://dropbox.com', true);
-	});
-
 	/*
 	| Settings
 	*/
@@ -97,6 +85,19 @@ describe('Crawler requests feature', function () {
 		});
 
 		crawler.queue('http://domain.com');
+	});
+
+	it('supports HTTPS urls', function (done) {
+		var crawler = new Crawler({
+			crawlExternal: true,
+			onPageCrawl: function (page) {
+				expect(page.url).toBe('https://www.google.com/');
+				crawler.kill();
+				done();
+			}
+		});
+
+		crawler.queue('https://www.google.com');
 	});
 
 	it('follows redirects', function (done) {

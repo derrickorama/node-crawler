@@ -75,12 +75,12 @@ describe('Crawler._onResponse method', function () {
 
 		beforeEach(function () {
 			pageInfo.page.url = 'http://www.google.com/';
-			response = { statusCode: 200, request: { href: 'http://www.alreadycrawled.com/' } };
+			response = { statusCode: 200, url: 'http://www.alreadycrawled.com/' };
 		});
 
 		it('calls _processRedirect', function () {
 			result = crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
-			expect(processRedirectSpy).toHaveBeenCalledWith(pageInfo, response.request.href, response);
+			expect(processRedirectSpy).toHaveBeenCalledWith(pageInfo, response.url, response);
 		});
 
 		describe('when _processRedirect returns null', function () {

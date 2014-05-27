@@ -53,25 +53,4 @@ describe('Page.dom method', function () {
 	
 	});
 
-	describe('when page.type is not a text file', function () {
-
-		beforeEach(function () {
-			page.type = 'application/zip';
-		});
-	
-		it('loads an empty string', function () {
-			var cheerioSpy = spyOn(cheerio, 'load');
-			page.dom();
-			expect(cheerioSpy.calls.length).toBe(1);
-			expect(cheerioSpy).toHaveBeenCalledWith('');
-		});
-
-		it('returns the DOM from cheerio', function () {
-			spyOn(cheerio, 'load').andReturn('here\'s your DOM');
-			var result = page.dom();
-			expect(result).toBe('here\'s your DOM');
-		});
-	
-	});
-
 });

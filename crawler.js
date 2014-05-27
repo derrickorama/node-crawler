@@ -4,12 +4,9 @@ var urllib = require('url');
 var async = require('async');
 var cheerio = require('cheerio');
 var phantom = require('phantom');
-var request = require('request');
 var tough = require('tough-cookie');
 var winston = require('winston');
 var _ = require('underscore');
-
-var USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36';
 
 var Crawler = function (params) {
 	if (typeof params !== 'object') {
@@ -74,14 +71,11 @@ Page.prototype = {
 	dom: function () {
 		var $;
 
-		// Make sure this is a text file of some sort
-		if (this.type.indexOf('text/') > -1) {
-			// Cheerio can kill the process during parsing, make sure it doesn't
-			try {
-				$ = cheerio.load(this.html);
-			} catch (e) {
-				console.log('Cheerio parsing error: ' + this.url);
-			}
+		// Cheerio can kill the process during parsing, make sure it doesn't
+		try {
+			$ = cheerio.load(this.html);
+		} catch (e) {
+			console.log('Cheerio parsing error: ' + this.url);
 		}
 
 		if ($ === undefined) {
@@ -222,120 +216,152 @@ Crawler.prototype = {
 
 		return false;
 	},
-	headerCheck: function (page, callback, urlOverride, existingJar) {
-		var crawler = this;
-		var cookiejar = existingJar || new tough.CookieJar();
-		var requestFunc = http;
-		var urlData = urlOverride || page.urlData;
-		var error = null;
+	_request: function (params, callback) {
+		var body = '';
 		var called = false;
-		var errorCallbackTimeout;
+		var cookiejar = new tough.CookieJar();
+		var error = null;
+		var errorTimeout;
 		var req;
+		var response;
 
-		if (urlData.protocol === 'https:') {
-			requestFunc = https;
-		}
+		var COMMON_MEDIA_EXT = /\.(?:3gp|aif|asf|asx|avi|flv|iff|m3u|m4a|m4p|m4v|mov|mp3|mp4|mpa|mpg|mpeg|ogg|ra|raw|rm|swf|vob|wav|wma|wmv)$/;
 
-		try {
-			req = requestFunc.request({
-				method: 'GET',
-				protocol: urlData.protocol,
-				host: urlData.hostname,
-				port: urlData.port,
-				path: urlData.path,
-				rejectUnauthorized: false,
-				headers: {
-					'cookie': cookiejar.getCookiesSync(urlData.href).join('; '),
-					'User-Agent': USER_AGENT
-				}
-			}, function (res) {
-				req.abort(); // Abort request, we just wanted the headers
-				clearTimeout(errorCallbackTimeout);
+		// Set timeout for request
+		var requestTimeout = setTimeout(function () {
+			if (req) {
+				req.abort();
+			}
+			error = new Error('Request timed out.');
+			finish();
+		}, params.timeout || 30000);
 
-				if (
-					res.statusCode &&
-					res.statusCode.toString().indexOf('30') === 0 &&
-					res.headers.location
-				) {
-					// Save cookies
-					_.each(res.headers['set-cookie'], function (cookie) {
-						cookiejar.setCookieSync(cookie, urlData.href);
+		function doRequest(url) {
+			var urlData = urllib.parse(url);
+			var requestFunc = http;
+
+			// Select correct protocol
+			if (urlData.protocol === 'https:') {
+				requestFunc = https;
+			}
+
+			// Attempt request
+			try {
+				req = requestFunc.request({
+					method: params.method || 'GET',
+					protocol: urlData.protocol,
+					host: urlData.hostname,
+					port: urlData.port,
+					path: urlData.path,
+					rejectUnauthorized: params.strictSSL || true,
+					headers: _.extend({
+						'cookie': params.cookies ? cookiejar.getCookiesSync(urlData.href).join('; ') : '',
+						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
+					}, params.headers || {})
+				}, function (res) {
+					var contentType = '';
+					response = res; // Set response
+					clearTimeout(errorTimeout); // Clear error and try to download
+
+					// Set response.url to current URL
+					response.url = url;
+
+					if (
+						response.statusCode &&
+						response.statusCode.toString().indexOf('30') === 0 &&
+						response.headers.location
+					) {
+						// Save cookies
+						_.each(response.headers['set-cookie'], function (cookie) {
+							cookiejar.setCookieSync(cookie, urlData.href);
+						});
+
+						// Peform redirect
+						req.abort();
+						doRequest(urllib.resolve(url, response.headers.location));
+						return;
+					}
+
+					// Update response
+					if (typeof response === 'object' && typeof response.headers === 'object' && response.headers.hasOwnProperty('content-type') === true) {
+						contentType = response.headers['content-type'];
+					}
+
+					// Do not download non-text documents
+					if (
+						contentType.indexOf('text/') < 0 ||
+						// Eliminate common file extensions that do not have the correct content-type
+						contentType.indexOf('text/') > -1 && COMMON_MEDIA_EXT.test(params.url) === true
+					) {
+						req.abort();
+						finish();
+						return;
+					}
+
+					// Download text/HTML
+					res.on('data', function (data) {
+						body += data.toString();
 					});
 
-					// Re-check headers
-					crawler.headerCheck(page, callback, urllib.parse(urllib.resolve(page.url, res.headers.location)), cookiejar);
-					return;
-				}
+					res.on('end', function () {
+						finish();
+					});
+				});
+			} catch (err) {
+				error = err;
+				finish();
+				return;
+			}
 
-				// Update page.type
-				if (typeof res === 'object' && typeof res.headers === 'object' && res.headers.hasOwnProperty('content-type') === true) {
-					page.type = res.headers['content-type'].replace(/;.*/g, '').replace(/(^\s+|\s+$)/g, '');
-				}
-
-				called = true;
-				callback(error, page, res);
-			});
-		} catch (e) {
-			callback(e, page);
-		}
-
-		if (req) {
 			req.on('error', function (err) {
 				error = err;
-				errorCallbackTimeout = setTimeout(function () {
-					if (called === false) {
-						callback(error, page);
-					}
-				});
+				errorTimeout = setTimeout(finish, 10);
 			});
 
 			req.end();
 		}
+
+		doRequest(params.url);
+
+		function finish() {
+			if (called === true) {
+				return;
+			}
+			called = true;
+			clearTimeout(errorTimeout);
+			clearTimeout(requestTimeout);
+			callback(error, response, body);
+		}
 	},
-	_request: request,
 	_crawlPage: function (pageInfo, finishCallback) {
 		var crawler = this;
 		var page = pageInfo.page;
-		var COMMON_MEDIA_EXT = /\.(?:3gp|aif|asf|asx|avi|flv|iff|m3u|m4a|m4p|m4v|mov|mp3|mp4|mpa|mpg|mpeg|ogg|ra|raw|rm|swf|vob|wav|wma|wmv)$/;
 
 		// Check headers for content-type
-		this.headerCheck(page, function (error, page, res) {
+		this._request({
+			url: page.url,
+			timeout: crawler.timeout,
+			strictSSL: crawler.strictSSL,
+			cookies: crawler.acceptCookies ? true : false
+		}, function (error, response, body) {
+			if (error) {
+				winston.error('Failed on: ' + page.url);
+				winston.error(error.message);
+			}
 
-			// Do not download non-text documents
-			if (
-				page.type.indexOf('text/') < 0 ||
-				error ||
-				// Eliminate common file extensions that do not have the correct content-type
-				page.type.indexOf('text/') > -1 && COMMON_MEDIA_EXT.test(page.url) === true
-			) {
-				if (error) {
-					winston.error('Failed on: ' + page.url);
-					winston.error(error.message);
-				}
-				done(error, res, '');
+			// Update page.type
+			if (typeof response === 'object' && typeof response.headers === 'object' && response.headers.hasOwnProperty('content-type') === true) {
+				page.type = response.headers['content-type'].replace(/;.*/g, '').replace(/(^\s+|\s+$)/g, '');
+			}
+
+			if (crawler.render === true) {
+				crawler._renderPage(pageInfo.page, function () {
+					done(error, response, body);
+				});
 				return false;
 			}
 
-			// Perform actual request
-			crawler._request({
-				url: page.url,
-				timeout: crawler.timeout,
-				strictSSL: crawler.strictSSL,
-				jar: crawler.acceptCookies ? request.jar() : false,
-				headers: {
-					'User-Agent': USER_AGENT
-				}
-			}, function (error, response, body) {
-
-				if (crawler.render === true) {
-					crawler._renderPage(pageInfo.page, function () {
-						done(error, response, body);
-					});
-					return false;
-				}
-
-				done(error, response, body);
-			});
+			done(error, response, body);
 		});
 
 		function done(error, response, body) {
@@ -386,8 +412,8 @@ Crawler.prototype = {
 		}
 
 		// Store the final URL (in case there was a redirect)
-		if (typeof response.request === 'object') {
-			finalURL = response.request.href;
+		if (response.url) {
+			finalURL = response.url;
 		}
 
 		// Check if page was a redirect and save the redirect data

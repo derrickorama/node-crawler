@@ -163,7 +163,7 @@ describe('Crawler link crawling feature', function () {
 			});
 
 			spyOn(crawler, '_request').andCallFake(function (params, callback) {
-				callback(null, { statusCode: 200, req: { method: 'GET' } }, '<a href="/Section/Page.shtml">page</a><a href="http://www.google.com/Project.shtml">page</a>');
+				callback(null, { statusCode: 200, headers: { 'content-type': 'text/html' }, req: { method: 'GET' } }, '<a href="/Section/Page.shtml">page</a><a href="http://www.google.com/Project.shtml">page</a>');
 			});
 			crawler.queue('http://domain.com/');
 		});
@@ -184,7 +184,7 @@ describe('Crawler link crawling feature', function () {
 			});
 
 			spyOn(crawler, '_request').andCallFake(function (params, callback) {
-				callback(null, { statusCode: 200, req: { method: 'GET' } }, '<a href="/Page/One.shtml">page</a><a href="/Page/Two.shtml">page</a><a href="/Page/Three.shtml">page</a>');
+				callback(null, { statusCode: 200, headers: { 'content-type': 'text/html' }, req: { method: 'GET' } }, '<a href="/Page/One.shtml">page</a><a href="/Page/Two.shtml">page</a><a href="/Page/Three.shtml">page</a>');
 			});
 			crawler.queue('http://domain.com/');
 		});
@@ -206,7 +206,7 @@ describe('Crawler link crawling feature', function () {
 			});
 
 			spyOn(crawler, '_request').andCallFake(function (params, callback) {
-				callback(null, { statusCode: 200, req: { method: 'GET' } }, '<a href="/Page/One.shtml">page</a><a href="/Page/Two.shtml">page</a><a href="/I/dont/match.shtml">page</a>');
+				callback(null, { statusCode: 200, headers: { 'content-type': 'text/html' }, req: { method: 'GET' } }, '<a href="/Page/One.shtml">page</a><a href="/Page/Two.shtml">page</a><a href="/I/dont/match.shtml">page</a>');
 			});
 			crawler.queue('http://domain.com/');
 		});
