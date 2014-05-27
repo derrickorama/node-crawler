@@ -119,7 +119,7 @@ describe('Crawler._request method', function () {
             timeout: 1
         }, function (error, response, body) {
             expect(mockRequest.abort).toHaveBeenCalled();
-            expect(error.message).toBe('Request timed out.');
+            expect(error).toEqual({ message: 'Request timed out.', code: 'ETIMEDOUT' });
             expect(body).toBe('');
             done();
         });

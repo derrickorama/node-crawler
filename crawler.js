@@ -232,7 +232,7 @@ Crawler.prototype = {
 			if (req) {
 				req.abort();
 			}
-			error = new Error('Request timed out.');
+			error = { message: 'Request timed out.', code: 'ETIMEDOUT' };
 			finish();
 		}, params.timeout || 30000);
 
