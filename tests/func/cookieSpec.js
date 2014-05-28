@@ -2,28 +2,27 @@ var http = require('http');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler cookie support', function () {
+	var cookie;
 	var responseBody;
 	var server;
 
 	beforeEach(function () {
 		responseBody = '';
+		cookie = 'cookie=test';
 		server = http.createServer(function (req, res) {
 			var status = 200;
-			var responseBody = '';
 			res.setHeader('Content-Type', 'text/html');
-			res.setHeader('Set-Cookie', 'cookie=test');
 
 			if (req.url === '/make-cookie') {
 				status = 301;
+				res.setHeader('Set-Cookie', cookie);
 				responseBody = http.STATUS_CODES[status] + '. Redirecting to show cookie';
 				res.setHeader('Content-Type', 'text/plain');
 
 				// Respond
 				res.statusCode = status;
 				res.setHeader('Location', '/show-cookie');
-			}
-
-			if (req.url === '/show-cookie') {
+			} else if (req.url === '/show-cookie') {
 				responseBody = req.headers['cookie'];
 			}
 
@@ -64,4 +63,14 @@ describe('Crawler cookie support', function () {
 		crawler.queue('http://localhost:6767/make-cookie');
 	});
 
+	it('ignores cookie parsing errors', function (done) {
+		// This will throw an exception and kill the process if it's not handled
+		var crawler = new Crawler({
+			onPageCrawl: function (page) {
+				done();
+			}
+		});
+		cookie = 'AMA Publishing GroupMachineID=635368805209600916';
+		crawler.queue('http://localhost:6767/make-cookie');
+	});
 });

@@ -273,7 +273,9 @@ Crawler.prototype = {
 					) {
 						// Save cookies
 						_.each(response.headers['set-cookie'], function (cookie) {
-							cookiejar.setCookieSync(cookie, urlData.href);
+							cookiejar.setCookieSync(cookie, urlData.href, {
+								ignoreError: true
+							});
 						});
 
 						// Peform redirect
