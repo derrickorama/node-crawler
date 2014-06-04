@@ -81,7 +81,7 @@ describe('Crawler._request method', function () {
                 port: null,
                 path: '/',
                 method: 'GET',
-                rejectUnauthorized: true,
+                rejectUnauthorized: false,
                 headers: {
                     'cookie': jasmine.any(String),
                     'User-Agent': jasmine.any(String)
@@ -102,7 +102,7 @@ describe('Crawler._request method', function () {
                 port: null,
                 path: '/',
                 method: 'GET',
-                rejectUnauthorized: true,
+                rejectUnauthorized: false,
                 headers: {
                     'cookie': jasmine.any(String),
                     'User-Agent': jasmine.any(String)
@@ -167,7 +167,7 @@ describe('Crawler._request method', function () {
                 port: null,
                 path: '/some-other-page',
                 method: 'GET',
-                rejectUnauthorized: true,
+                rejectUnauthorized: false,
                 headers: {
                     'cookie': jasmine.any(String),
                     'User-Agent': jasmine.any(String)

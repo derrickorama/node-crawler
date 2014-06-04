@@ -253,7 +253,7 @@ Crawler.prototype = {
 					host: urlData.hostname,
 					port: urlData.port,
 					path: urlData.path,
-					rejectUnauthorized: params.strictSSL || true,
+					rejectUnauthorized: params.hasOwnProperty('strictSSL') ? params.strictSSL : false,
 					headers: _.extend({
 						'cookie': params.cookies ? cookiejar.getCookiesSync(urlData.href).join('; ') : '',
 						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
