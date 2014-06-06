@@ -67,6 +67,7 @@ var Page = function (url, isExternal) {
 };
 
 Page.prototype = {
+	PAGESPEED_REGEX: /(.*\.([^\.]+))\.pagespeed\..{2}\.[^\.]+\.\2\s*$/i,
 	PAGE_NOT_RENDERED_ERROR: 'Error: Page was not rendered.',
 	dom: function () {
 		var $;
@@ -84,6 +85,10 @@ Page.prototype = {
 
 		return $;
 	},
+	addLink: function (url) {
+		url = urllib.resolve(this.url, url).replace(this.PAGESPEED_REGEX, '$1');
+		this.links.push(url);
+	},
 	setHTML: function (html) {
 		var page = this;
 
@@ -93,7 +98,7 @@ Page.prototype = {
 		this.dom()('a').each(function () {
 			var href = this.attr('href');
 			if (href) {
-				page.links.push(urllib.resolve(page.url, href));
+				page.addLink(href);
 			}
 		});
 	},
