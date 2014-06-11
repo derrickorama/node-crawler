@@ -4,53 +4,8 @@ var Page = require('../../crawler.js').Page;
 describe('Crawler page', function () {
 
 	/*
-	| Defaults
-	*/
-
-	it('should set the url to "" by default', function () {
-		var page = new Page();
-		expect(page.url).toBe('');
-	});
-
-	it('should set the html to "" by default', function () {
-		var page = new Page();
-		expect(page.html).toBe('');
-	});
-
-	it('should have an empty DOM by default', function () {
-		var page = new Page();
-		expect(page.dom().hasOwnProperty('_root')).toBe(true);
-	});
-
-	it('should have an empty array of links by default', function () {
-		var page = new Page();
-		expect(_.isArray(page.links)).toBe(true);
-		expect(page.links.length).toBe(0);
-	});
-
-	it('should have an empty array of redirects by default', function () {
-		var page = new Page();
-		expect(page.redirects).toEqual([]);
-	});
-
-	it('should have a default type of ""', function () {
-		var page = new Page();
-		expect(page.type).toBe('');
-	});
-
-	it('sets the isExternal property to false when nothing is supplied', function () {
-		var page = new Page();
-		expect(page.isExternal).toBe(false);
-	});
-
-	/*
 	| URL setting
 	*/
-
-	it('should allow you to set a url property', function () {
-		var page = new Page('http://www.google.com/');
-		expect(page.url).toBe('http://www.google.com/');
-	});
 
 	it('should parse the URL for each page to break it up into separate components', function () {
 		var page = new Page('http://www.google.com/');
@@ -62,19 +17,10 @@ describe('Crawler page', function () {
 		expect(page.urlData.href).toBe('http://www.google.com/');
 	});
 
-	it('should not include the has when setting a URL', function () {
+	it('should not include the hash when setting a URL', function () {
 		var page = new Page('http://www.google.com/#hash');
 		expect(page.url).toBe('http://www.google.com/');
 		expect(page.urlData.hash).toBe('#hash');
-	});
-
-	/*
-	| isExternal setting
-	*/
-
-	it('sets the isExternal property of a page based on supplied isExternal argument', function () {
-		var page = new Page('http://www.google.com/', true);
-		expect(page.isExternal).toBe(true);
 	});
 
 	/*

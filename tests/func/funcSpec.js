@@ -14,7 +14,7 @@ describe('Crawler queue', function () {
 			}
 		});
 		spyOn(crawler, '_request').andCallFake(mockResponse);
-		crawler.queue('http://www.google.com', false);
+		crawler.queue('http://www.google.com', null, false);
 	});
 
 	it('should allow you to stop the crawl at any point (emptying queue and not processing any responses)', function (done) {

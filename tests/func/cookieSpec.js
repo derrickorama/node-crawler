@@ -66,7 +66,7 @@ describe('Crawler cookie support', function () {
 	it('ignores cookie parsing errors', function (done) {
 		// This will throw an exception and kill the process if it's not handled
 		var crawler = new Crawler({
-			onPageCrawl: function (page) {
+			onPageCrawl: function () {
 				done();
 			}
 		});

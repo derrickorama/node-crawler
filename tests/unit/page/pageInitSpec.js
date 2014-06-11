@@ -43,13 +43,18 @@ describe('Page instantiation', function () {
         expect(page.links).toEqual([]);
     });
 
+    it('sets referrer to supplied referrer', function () {
+        var page = new Page('http://www.google.com/', 'http://referrer.com/');
+        expect(page.referrer).toBe('http://referrer.com/'); 
+    });
+
     it('sets "isExternal" to false by default', function () {
         var page = new Page();
         expect(page.isExternal).toBe(false);
     });
 
     it('sets "isExternal" to supplied "isExternal" value', function () {
-        var page = new Page(null, true);
+        var page = new Page(null, null, true);
         expect(page.isExternal).toBe(true);
     });
 

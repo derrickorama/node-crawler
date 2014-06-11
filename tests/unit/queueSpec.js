@@ -25,7 +25,7 @@ describe('Crawler.queue method', function () {
 
         beforeEach(function () {
             crawler._crawlExternal = false;
-            result = crawler.queue('http://www.google.com', true, true);
+            result = crawler.queue('http://www.google.com', 'http://www.referrer.com/', true);
         });
     
         it('returns false', function () {
@@ -102,15 +102,20 @@ describe('Crawler.queue method', function () {
             expect(crawler._urlsCrawled).toContain('http://www.google.com/');
         });
 
+        it('sets the Page\'s referrer to the supplied referrer', function () {
+            crawler.queue('http://www.google.com/', 'http://www.referrer.com/');
+            expect(asyncQueueSpy.calls[0].args[0].page.referrer).toBe('http://www.referrer.com/');
+        });
+
         describe('isExternal property', function () {
             
             it('sets crawlLinks property to false if isExternal is true', function () {
-                crawler.queue('http://www.google.com/', true);
+                crawler.queue('http://www.google.com/', null, true);
                 expect(asyncQueueSpy.calls[0].args[0].crawlLinks).toBe(false);
             });
             
             it('sets crawlLinks property to true if isExternal is false', function () {
-                crawler.queue('http://www.google.com/', false);
+                crawler.queue('http://www.google.com/', null, false);
                 expect(asyncQueueSpy.calls[0].args[0].crawlLinks).toBe(true);
             });
             
@@ -120,12 +125,12 @@ describe('Crawler.queue method', function () {
             });
 
             it('sets page\'s isExternal property to true if isExternal is true', function () {
-                crawler.queue('http://www.google.com/', true);
+                crawler.queue('http://www.google.com/', null, true);
                 expect(asyncQueueSpy.calls[0].args[0].page.isExternal).toBe(true);
             });
 
             it('sets page\'s isExternal property to false if isExternal is false', function () {
-                crawler.queue('http://www.google.com/', false);
+                crawler.queue('http://www.google.com/', null, false);
                 expect(asyncQueueSpy.calls[0].args[0].page.isExternal).toBe(false);
             });
 

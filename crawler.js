@@ -41,7 +41,7 @@ var Crawler = function (params) {
 	};
 };
 
-var Page = function (url, isExternal) {
+var Page = function (url, referrer, isExternal) {
 	var page = this;
 
 	this.url = url || '';
@@ -50,6 +50,7 @@ var Page = function (url, isExternal) {
 	this.redirects = [];
 	this.type = '';
 	this.links = [];
+	this.referrer = referrer;
 	this.isExternal = isExternal || false;
 	this._ph = {
 		exit: function () {}
@@ -108,19 +109,19 @@ Page.prototype = {
 			page.phExit(checkID);
 		});
 	},
-	phExit: function (checkID) {
-		// Find check ID
+	phExit: function (id) {
+		// Find ID
 		var index;
 
-		// Remove check ID from array
-		if (checkID) {
-			index = this.phWaits.indexOf(checkID);
+		// Remove ID from array
+		if (id) {
+			index = this.phWaits.indexOf(id);
 			if (index > -1) {
 				this.phWaits.splice(index, 1);
 			}
 		}
 
-		// If no other checks are present, close PhantomJS
+		// If no other IDs are present, close PhantomJS
 		if (this.phWaits.length === 0) {
 			this._ph.exit();
 		}
@@ -183,7 +184,7 @@ Crawler.prototype = {
 
 				// Crawl same-domain URL
 				// - tell queue whether this is external and to use a HEAD request if true
-				crawler.queue(pageLink.url, isExternal, isExternal);
+				crawler.queue(pageLink.url, page.url, isExternal);
 			}
 		}
 
@@ -466,7 +467,7 @@ Crawler.prototype = {
 			this._responseError(pageInfo, response, error, finishCallback);
 		}
 	},
-	queue: function (url, isExternal) {
+	queue: function (url, referrer, isExternal) {
 		var crawler = this,
 			urlData = urllib.parse(url),
 			isExclude = false;
@@ -499,7 +500,7 @@ Crawler.prototype = {
 
 		// Add to async queue
 		this._queue.push({
-			page: new Page(url, isExternal),
+			page: new Page(url, referrer, isExternal),
 			crawlLinks: isExternal !== true
 		}, function () {
 			crawler._asyncQueueCallback.apply(crawler, arguments);

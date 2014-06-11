@@ -53,6 +53,13 @@ describe('Crawler._responseSuccess method', function () {
 			expect(queueSpy.callCount).toBe(3);
 		});
 
+		it('queues each link with the page.url (referrer)', function () {
+			crawler._responseSuccess(pageInfo, response, '', callback);
+			expect(queueSpy.calls[0].args[1]).toBe(page.url);
+			expect(queueSpy.calls[1].args[1]).toBe(page.url);
+			expect(queueSpy.calls[2].args[1]).toBe(page.url);
+		});
+
 		it('does not queue mailto: links', function () {
 			pageInfo.page.links = [
 				'mailto:me@email.com'
@@ -101,7 +108,7 @@ describe('Crawler._responseSuccess method', function () {
 			});
 		
 			it('tells the queue that it should not crawl links on that page', function () {
-				expect(queueSpy.calls[0].args[1]).toBe(true);
+				expect(queueSpy.calls[0].args[2]).toBe(true);
 			});
 		
 			it('tells the queue that it should use a HEAD request', function () {
