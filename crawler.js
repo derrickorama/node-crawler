@@ -25,7 +25,15 @@ var Crawler = function (params) {
 	}, this.workers);
 
 	// Public properties
-	this.acceptCookies = params.acceptCookies !== undefined ? params.acceptCookies : true;
+
+	// Set cookie jar
+	if (params.jar === false) {
+		this.jar = false;
+	} else {
+		// Create new jar if "true" or use jar provided
+		this.jar = typeof params.jar === 'object' ? params.jar : new tough.CookieJar();
+	}
+
 	this.excludePatterns = params.excludePatterns || [];
 	this.onDrain = params.onDrain || function () {};
 	this.onError = params.onError || function () {};
@@ -223,9 +231,9 @@ Crawler.prototype = {
 		return false;
 	},
 	_request: function (params, callback) {
+		var crawler = this;
 		var body = '';
 		var called = false;
-		var cookiejar = new tough.CookieJar();
 		var error = null;
 		var errorTimeout;
 		var req;
@@ -261,7 +269,7 @@ Crawler.prototype = {
 					path: urlData.path,
 					rejectUnauthorized: params.hasOwnProperty('strictSSL') ? params.strictSSL : false,
 					headers: _.extend({
-						'cookie': params.cookies ? cookiejar.getCookiesSync(urlData.href).join('; ') : '',
+						'cookie': crawler.jar ? crawler.jar.getCookiesSync(urlData.href).join('; ') : '',
 						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
 					}, params.headers || {})
 				}, function (res) {
@@ -277,12 +285,15 @@ Crawler.prototype = {
 						response.statusCode.toString().indexOf('30') === 0 &&
 						response.headers.location
 					) {
+					
 						// Save cookies
-						_.each(response.headers['set-cookie'], function (cookie) {
-							cookiejar.setCookieSync(cookie, urlData.href, {
-								ignoreError: true
+						if (crawler.jar !== false) {
+							_.each(response.headers['set-cookie'], function (cookie) {
+								crawler.jar.setCookieSync(cookie, urlData.href, {
+									ignoreError: true
+								});
 							});
-						});
+						}
 
 						// Peform redirect
 						req.abort();
@@ -349,8 +360,7 @@ Crawler.prototype = {
 		this._request({
 			url: page.url,
 			timeout: crawler.timeout,
-			strictSSL: crawler.strictSSL,
-			cookies: crawler.acceptCookies ? true : false
+			strictSSL: crawler.strictSSL
 		}, function (error, response, body) {
 			if (error) {
 				winston.error('Failed on: ' + page.url);

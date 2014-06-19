@@ -1,4 +1,5 @@
 var http = require('http');
+var tough = require('tough-cookie');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler cookie support', function () {
@@ -47,7 +48,7 @@ describe('Crawler cookie support', function () {
 				done();
 			}
 		});
-		expect(crawler.acceptCookies).toBe(true);
+		expect(crawler.jar instanceof tough.CookieJar).toBe(true);
 		crawler.queue('http://localhost:6767/make-cookie');
 	});
 
@@ -57,9 +58,9 @@ describe('Crawler cookie support', function () {
 				expect(page.html).toBe('');
 				done();
 			},
-			acceptCookies: false
+			jar: false
 		});
-		expect(crawler.acceptCookies).toBe(false);
+		expect(crawler.jar).toBe(false);
 		crawler.queue('http://localhost:6767/make-cookie');
 	});
 
@@ -73,4 +74,19 @@ describe('Crawler cookie support', function () {
 		cookie = 'AMA Publishing GroupMachineID=635368805209600916';
 		crawler.queue('http://localhost:6767/make-cookie');
 	});
+
+	it('allows you to provide an existing cookie jar', function () {
+		var cookieJar = new tough.CookieJar();
+
+		cookieJar.setCookieSync('blah=yes', 'http://domain.com', {
+			ignoreError: true
+		});
+
+		var crawler = new Crawler({
+			jar: cookieJar
+		});
+
+		expect(crawler.jar.getCookiesSync('http://domain.com').toString()).toBe('blah=yes; Path=/');
+	});
+
 });

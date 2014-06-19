@@ -56,10 +56,6 @@ describe('Crawler._crawlPage method', function () {
 		it('uses the crawler.strictSSL for the strictSSL', function () {
 			expect(crawler._request.calls[0].args[0].strictSSL).toBe(false);
 		});
-	
-		it('uses the crawler.acceptCookies for the strictSSL', function () {
-			expect(crawler._request.calls[0].args[0].cookies).toBe(true);
-		});
 
 		it('executes _onResponse function in response callback', function () {
 			// Execute the callback
@@ -86,43 +82,6 @@ describe('Crawler._crawlPage method', function () {
 		
 		});
 	
-	});
-
-	describe('request cookie setter', function () {
-
-		it('sets jar to a new jar if crawler.acceptCookies is true', function () {
-			crawler.acceptCookies = true;
-			crawler._crawlPage(pageInfo);
-			expect(crawler._request).toHaveBeenCalledWith({
-				url: pageInfo.page.url,
-				timeout: jasmine.any(Number),
-				strictSSL: false,
-				cookies: true
-			}, jasmine.any(Function));
-		});
-	
-		it('sets jar to false if crawler.acceptCookies is false', function () {
-			crawler.acceptCookies = false;
-			crawler._crawlPage(pageInfo);
-			expect(crawler._request).toHaveBeenCalledWith({
-				url: pageInfo.page.url,
-				timeout: jasmine.any(Number),
-				strictSSL: false,
-				cookies: false
-			}, jasmine.any(Function));
-		});
-	
-		it('sets jar to false if crawler.acceptCookies is neither true/false', function () {
-			crawler.acceptCookies = null;
-			crawler._crawlPage(pageInfo);
-			expect(crawler._request).toHaveBeenCalledWith({
-				url: pageInfo.page.url,
-				timeout: jasmine.any(Number),
-				strictSSL: false,
-				cookies: false
-			}, jasmine.any(Function));
-		});
-
 	});
 
 });
