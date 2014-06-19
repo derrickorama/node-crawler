@@ -212,6 +212,18 @@ describe('Crawler._request method', function () {
         });
     });
 
+    it('aborts request when running against an external page', function (done) {
+        mockResponse.headers['content-type'] = 'text/html';
+        crawler._request({
+            url: 'http://www.google.com/',
+            isExternal: true
+        }, function (error, response, body) {
+            expect(mockRequest.abort).toHaveBeenCalled();
+            expect(body).toBe('');
+            done();
+        });
+    });
+
     _.each(COMMON_MEDIA_EXCLUDES, function (type) {
 
         it('aborts request when running against "' + type + '" files', function (done) {

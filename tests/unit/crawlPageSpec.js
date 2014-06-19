@@ -42,6 +42,7 @@ describe('Crawler._crawlPage method', function () {
 			crawler.strictSSL = false;
 			crawler.timeout = 1000;
 			crawler.acceptCookies = true;
+			pageInfo.page.isExternal = true;
 			crawler._crawlPage(pageInfo, function () {});
 		});
 	
@@ -55,6 +56,10 @@ describe('Crawler._crawlPage method', function () {
 	
 		it('uses the crawler.strictSSL for the strictSSL', function () {
 			expect(crawler._request.calls[0].args[0].strictSSL).toBe(false);
+		});
+
+		it('passes the pageInfo.page.isExternal property to the request', function () {
+			expect(crawler._request.calls[0].args[0].isExternal).toBe(true);
 		});
 
 		it('executes _onResponse function in response callback', function () {

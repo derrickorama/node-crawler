@@ -306,11 +306,13 @@ Crawler.prototype = {
 						contentType = response.headers['content-type'];
 					}
 
-					// Do not download non-text documents
+					// Do not download non-text documents or external page content
 					if (
 						contentType.indexOf('text/') < 0 ||
 						// Eliminate common file extensions that do not have the correct content-type
-						contentType.indexOf('text/') > -1 && COMMON_MEDIA_EXT.test(params.url) === true
+						contentType.indexOf('text/') > -1 && COMMON_MEDIA_EXT.test(params.url) === true ||
+						// Exclude external pages - we don't care about the content
+						params.isExternal === true
 					) {
 						req.abort();
 						finish();
@@ -360,7 +362,8 @@ Crawler.prototype = {
 		this._request({
 			url: page.url,
 			timeout: crawler.timeout,
-			strictSSL: crawler.strictSSL
+			strictSSL: crawler.strictSSL,
+			isExternal: page.isExternal
 		}, function (error, response, body) {
 			if (error) {
 				winston.error('Failed on: ' + page.url);
