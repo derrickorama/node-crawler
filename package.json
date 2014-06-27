@@ -1,7 +1,7 @@
 {
   "name": "node-crawler",
   "description": "A web crawler module for Node.js.",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "author": "Derrick Gall",
   "engines": [
     "node"
