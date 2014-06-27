@@ -14,7 +14,7 @@ describe('Crawler cookie support', function () {
 			var status = 200;
 			res.setHeader('Content-Type', 'text/html');
 
-			if (req.url === '/make-cookie') {
+			if (req.url.indexOf('/make-cookie') > -1) {
 				status = 301;
 				res.setHeader('Set-Cookie', cookie);
 				responseBody = http.STATUS_CODES[status] + '. Redirecting to show cookie';
@@ -23,7 +23,7 @@ describe('Crawler cookie support', function () {
 				// Respond
 				res.statusCode = status;
 				res.setHeader('Location', '/show-cookie');
-			} else if (req.url === '/show-cookie') {
+			} else if (req.url.indexOf('/show-cookie') > -1) {
 				responseBody = req.headers['cookie'];
 			}
 

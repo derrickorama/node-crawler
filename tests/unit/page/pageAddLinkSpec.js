@@ -17,9 +17,4 @@ describe('Page.addLink method', function () {
     expect(page.links).toEqual(['http://www.google.com/some-page']);
   });
 
-  it('converts pagespeed URLs to their regular URL', function () {
-    page.addLink('/page.html.pagespeed.ce.Aiendnc30-d.html');
-    expect(page.links).toEqual(['http://www.google.com/page.html']);
-  });
-
 });

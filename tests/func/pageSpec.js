@@ -90,13 +90,4 @@ describe('Crawler page', function () {
 		expect(page.links.indexOf('http://www.google.com/I-am-relative')).toBeGreaterThan(-1);
 	});
 
-	it('converts pagespeed URLs to their regular URL', function () {
-		var page = new Page('http://www.google.com/');
-		page.type = 'text/html';
-		page.setHTML('<a href="/page.html.pagespeed.tb.32984djd8cA.html">link</a>');
-
-		expect(page.links.length).toBe(1);
-		expect(page.links).toContain('http://www.google.com/page.html');
-	});
-
 });

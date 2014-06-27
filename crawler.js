@@ -76,7 +76,6 @@ var Page = function (url, referrer, isExternal) {
 };
 
 Page.prototype = {
-	PAGESPEED_REGEX: /(.*\.([^\.]+))\.pagespeed\..{2}\.[^\.]+\.\2\s*$/i,
 	PAGE_NOT_RENDERED_ERROR: 'Error: Page was not rendered.',
 	dom: function () {
 		var $;
@@ -95,8 +94,7 @@ Page.prototype = {
 		return $;
 	},
 	addLink: function (url) {
-		url = urllib.resolve(this.url, url).replace(this.PAGESPEED_REGEX, '$1');
-		this.links.push(url);
+		this.links.push(urllib.resolve(this.url, url));
 	},
 	setHTML: function (html) {
 		var page = this;
@@ -253,11 +251,20 @@ Crawler.prototype = {
 		function doRequest(url) {
 			var urlData = urllib.parse(url);
 			var requestFunc = http;
+			var query = urlData.search || '';
 
 			// Select correct protocol
 			if (urlData.protocol === 'https:') {
 				requestFunc = https;
 			}
+
+			// Disable PageSpeed
+			if (query.indexOf('?') > -1) {
+				query += '&';
+			} else {
+				query += '?';
+			}
+			query += 'ModPagespeed=off';
 
 			// Attempt request
 			try {
@@ -266,7 +273,7 @@ Crawler.prototype = {
 					protocol: urlData.protocol,
 					host: urlData.hostname,
 					port: urlData.port,
-					path: urlData.path,
+					path: urlData.pathname + query,
 					rejectUnauthorized: params.hasOwnProperty('strictSSL') ? params.strictSSL : false,
 					headers: _.extend({
 						'cookie': crawler.jar ? crawler.jar.getCookiesSync(urlData.href).join('; ') : '',
