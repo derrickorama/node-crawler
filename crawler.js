@@ -441,7 +441,8 @@ Crawler.prototype = {
 
 		// Store the final URL (in case there was a redirect)
 		if (response.url) {
-			finalURL = response.url;
+			// Also strip ModPagespeed from URL
+			finalURL = response.url = response.url.replace(/[&\?]ModPagespeed=off/gi, '');
 		}
 
 		// Check if page was a redirect and save the redirect data
