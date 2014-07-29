@@ -1,3 +1,4 @@
+var Buffer = require('buffer').Buffer;
 var http = require('http');
 var https = require('https');
 var urllib = require('url');
@@ -34,6 +35,7 @@ var Crawler = function (params) {
 		this.jar = typeof params.jar === 'object' ? params.jar : new tough.CookieJar();
 	}
 
+	this.auth = params.auth || false;
 	this.excludePatterns = params.excludePatterns || [];
 	this.onDrain = params.onDrain || function () {};
 	this.onError = params.onError || function () {};
@@ -277,7 +279,8 @@ Crawler.prototype = {
 					rejectUnauthorized: params.hasOwnProperty('strictSSL') ? params.strictSSL : false,
 					headers: _.extend({
 						'cookie': crawler.jar ? crawler.jar.getCookiesSync(urlData.href).join('; ') : '',
-						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36'
+						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36',
+						'Authorization': params.auth ? 'Basic ' + new Buffer(params.auth.username + ':' + params.auth.password).toString('base64') : ''
 					}, params.headers || {})
 				}, function (res) {
 					var contentType = '';
@@ -370,7 +373,8 @@ Crawler.prototype = {
 			url: page.url,
 			timeout: crawler.timeout,
 			strictSSL: crawler.strictSSL,
-			isExternal: page.isExternal
+			isExternal: page.isExternal,
+			auth: crawler.auth
 		}, function (error, response, body) {
 			if (error) {
 				winston.error('Failed on: ' + page.url);

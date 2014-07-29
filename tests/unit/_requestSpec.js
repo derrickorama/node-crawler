@@ -84,7 +84,8 @@ describe('Crawler._request method', function () {
                 rejectUnauthorized: false,
                 headers: {
                     'cookie': jasmine.any(String),
-                    'User-Agent': jasmine.any(String)
+                    'User-Agent': jasmine.any(String),
+                    'Authorization': jasmine.any(String)
                 }
             }, jasmine.any(Function));
             expect(mockRequest.end).toHaveBeenCalled();
@@ -105,7 +106,8 @@ describe('Crawler._request method', function () {
                 rejectUnauthorized: false,
                 headers: {
                     'cookie': jasmine.any(String),
-                    'User-Agent': jasmine.any(String)
+                    'User-Agent': jasmine.any(String),
+                    'Authorization': jasmine.any(String)
                 }
             }, jasmine.any(Function));
             expect(mockRequest.end).toHaveBeenCalled();
@@ -170,7 +172,8 @@ describe('Crawler._request method', function () {
                 rejectUnauthorized: false,
                 headers: {
                     'cookie': jasmine.any(String),
-                    'User-Agent': jasmine.any(String)
+                    'User-Agent': jasmine.any(String),
+                    'Authorization': jasmine.any(String)
                 }
             }, jasmine.any(Function));
 
@@ -267,6 +270,16 @@ describe('Crawler._request method', function () {
             url: 'http://www.google.com/?query=something'
         }, function () {
             expect(http.request.calls[0].args[0].path).toBe('/?query=something&ModPagespeed=off');
+            done();
+        });
+    });
+
+    it('uses basic authentication if crawler.auth contains credentials', function (done) {
+        crawler._request({
+            url: 'http://www.google.com/?query=something',
+            auth: { username: 'user', password: 'pass' }
+        }, function () {
+            expect(http.request.calls[0].args[0].headers.Authorization).toBe('Basic ' + new Buffer('user:pass').toString('base64'));
             done();
         });
     });

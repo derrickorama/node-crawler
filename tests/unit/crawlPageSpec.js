@@ -43,6 +43,7 @@ describe('Crawler._crawlPage method', function () {
 			crawler.timeout = 1000;
 			crawler.acceptCookies = true;
 			pageInfo.page.isExternal = true;
+			crawler.auth = { username: 'user', password: 'pass' };
 			crawler._crawlPage(pageInfo, function () {});
 		});
 	
@@ -60,6 +61,10 @@ describe('Crawler._crawlPage method', function () {
 
 		it('passes the pageInfo.page.isExternal property to the request', function () {
 			expect(crawler._request.calls[0].args[0].isExternal).toBe(true);
+		});
+
+		it('passes the crawler.auth property to the request', function () {
+			expect(crawler._request.calls[0].args[0].auth).toBe(crawler.auth);
 		});
 
 		it('executes _onResponse function in response callback', function () {

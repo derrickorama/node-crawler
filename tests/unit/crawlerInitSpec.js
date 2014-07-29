@@ -63,4 +63,15 @@ describe('Crawler initialization', function () {
 		expect(async.queue).toHaveBeenCalledWith(jasmine.any(Function), 6);
 	});
 
+	it('sets "auth" property to false by default', function () {
+		var crawler = new Crawler();
+		expect(crawler.auth).toBe(false);
+	});
+
+	it('sets "auth" property to supplied "auth" value', function () {
+		var auth = { username: 'user', password: 'pass' };
+		var crawler = new Crawler({ auth: auth });
+		expect(crawler.auth).toBe(auth);
+	});
+
 });
