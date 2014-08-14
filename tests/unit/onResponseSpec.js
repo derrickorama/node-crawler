@@ -131,7 +131,13 @@ describe('Crawler._onResponse method', function () {
 
 		beforeEach(function () {
 			pageInfo.page.url = 'http://www.google.com/';
+			pageInfo.page.isExternal = false;
 			response = { statusCode: 200, url: 'http://www.alreadycrawled.com/' };
+		});
+
+		it('marks pages as external when final URL is not on the same domain', function () {
+			result = crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
+			expect(pageInfo.page.isExternal).toBe(true);
 		});
 
 		it('calls _processRedirect', function () {

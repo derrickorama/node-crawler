@@ -451,6 +451,13 @@ Crawler.prototype = {
 
 		// Check if page was a redirect and save the redirect data
 		if (finalURL !== undefined && finalURL !== pageInfo.page.url) {
+
+			// Check if redirect went to an external URL
+			if (pageInfo.page.isExternal === false && this.isExternal(pageInfo.page.url, finalURL) === true) {
+				pageInfo.page.isExternal = true;
+			}
+
+			// Process redirect and get new, detached (cloned) object
 			pageInfo = this._processRedirect(pageInfo, finalURL, response);
 
 			// If pageInfo is null, skip it. It's already been processed.
