@@ -39,62 +39,6 @@ describe('Crawler._onResponse method', function () {
 		crawler._onResponse(pageInfo, null, [], '', function () {});
 	});
 
-	/*
-	| ModPagespeed=off removal
-	*/
-
-	function modPageSpeedRemoved(expectedURL) {
-
-		it('is removed from redirects', function () {
-			pageInfo.page.url = 'http://www.google.com/';
-			crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
-			expect(processRedirectSpy.calls[0].args[1]).toBe(expectedURL);
-			expect(processRedirectSpy.calls[0].args[2].url).toBe(expectedURL);
-		});
-
-		it('is removed from successful requests', function () {
-			crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
-			expect(successSpy.calls[0].args[1].url).toBe(expectedURL);
-		});
-
-		it('is removed from failed requests', function () {
-			response.statusCode = 404;
-			crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
-			expect(failureSpy.calls[0].args[1].url).toBe(expectedURL);
-		});
-
-	}
-
-	describe('"ModPageSpeed" query removal', function () {
-
-		beforeEach(function () {
-			pageInfo.page.url = 'http://www.domain.com/';
-			response = { statusCode: 200 };
-		});
-	
-		describe('with "?"', function () {
-		
-			beforeEach(function () {
-				response.url = 'http://www.domain.com/?ModPageSpeed=off';
-			});
-
-			modPageSpeedRemoved('http://www.domain.com/');
-		
-		});
-	
-		describe('with "&', function () {
-		
-			beforeEach(function () {
-				response.url = 'http://www.domain.com/?query=yes&ModPageSpeed=off';
-			});
-
-			modPageSpeedRemoved('http://www.domain.com/?query=yes');
-		
-		});
-	
-	});
-	// -- end ModPagespeed=off removal --
-
 	describe('when killed', function () {
 		var result;
 

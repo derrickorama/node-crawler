@@ -260,14 +260,6 @@ Crawler.prototype = {
 				requestFunc = https;
 			}
 
-			// Disable PageSpeed
-			if (query.indexOf('?') > -1) {
-				query += '&';
-			} else {
-				query += '?';
-			}
-			query += 'ModPagespeed=off';
-
 			// Attempt request
 			try {
 				req = requestFunc.request({
@@ -280,7 +272,8 @@ Crawler.prototype = {
 					headers: _.extend({
 						'cookie': crawler.jar ? crawler.jar.getCookiesSync(urlData.href).join('; ') : '',
 						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36',
-						'Authorization': params.auth ? 'Basic ' + new Buffer(params.auth.username + ':' + params.auth.password).toString('base64') : ''
+						'Authorization': params.auth ? 'Basic ' + new Buffer(params.auth.username + ':' + params.auth.password).toString('base64') : '',
+						'PageSpeed': 'off' // disable ModPageSpeed
 					}, params.headers || {})
 				}, function (res) {
 					var contentType = '';
@@ -445,8 +438,7 @@ Crawler.prototype = {
 
 		// Store the final URL (in case there was a redirect)
 		if (response.url) {
-			// Also strip ModPagespeed from URL
-			finalURL = response.url = response.url.replace(/[&\?]ModPagespeed=off/gi, '');
+			finalURL = response.url;
 		}
 
 		// Check if page was a redirect and save the redirect data

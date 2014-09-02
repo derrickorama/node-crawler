@@ -79,13 +79,14 @@ describe('Crawler._request method', function () {
                 protocol: 'http:',
                 host: 'www.google.com',
                 port: null,
-                path: '/?ModPagespeed=off',
+                path: '/',
                 method: 'GET',
                 rejectUnauthorized: false,
                 headers: {
                     'cookie': jasmine.any(String),
                     'User-Agent': jasmine.any(String),
-                    'Authorization': jasmine.any(String)
+                    'Authorization': jasmine.any(String),
+                    'PageSpeed': 'off'
                 }
             }, jasmine.any(Function));
             expect(mockRequest.end).toHaveBeenCalled();
@@ -101,13 +102,14 @@ describe('Crawler._request method', function () {
                 protocol: 'https:',
                 host: 'www.google.com',
                 port: null,
-                path: '/?ModPagespeed=off',
+                path: '/',
                 method: 'GET',
                 rejectUnauthorized: false,
                 headers: {
                     'cookie': jasmine.any(String),
                     'User-Agent': jasmine.any(String),
-                    'Authorization': jasmine.any(String)
+                    'Authorization': jasmine.any(String),
+                    'PageSpeed': 'off'
                 }
             }, jasmine.any(Function));
             expect(mockRequest.end).toHaveBeenCalled();
@@ -167,13 +169,14 @@ describe('Crawler._request method', function () {
                 protocol: 'http:',
                 host: 'www.google.com',
                 port: null,
-                path: '/some-other-page?ModPagespeed=off',
+                path: '/some-other-page',
                 method: 'GET',
                 rejectUnauthorized: false,
                 headers: {
                     'cookie': jasmine.any(String),
                     'User-Agent': jasmine.any(String),
-                    'Authorization': jasmine.any(String)
+                    'Authorization': jasmine.any(String),
+                    'PageSpeed': 'off'
                 }
             }, jasmine.any(Function));
 
@@ -192,7 +195,7 @@ describe('Crawler._request method', function () {
             url: 'http://www.google.com/'
         }, function () {
             expect(http.request.calls[2].args[0].host).toBe('www.bing.com');
-            expect(http.request.calls[2].args[0].path).toBe('/another-page?ModPagespeed=off');
+            expect(http.request.calls[2].args[0].path).toBe('/another-page');
             done();
         });
         setTimeout(function () {
@@ -252,24 +255,6 @@ describe('Crawler._request method', function () {
             expect(error).toBe(null);
             expect(response).toBe(mockResponse);
             expect(body).toBe('some body');
-            done();
-        });
-    });
-
-    it('turns ModPagespeed off', function (done) {
-        crawler._request({
-            url: 'http://www.google.com/'
-        }, function () {
-            expect(http.request.calls[0].args[0].path).toBe('/?ModPagespeed=off');
-            done();
-        });
-    });
-
-    it('turns ModPagespeed off for URLs that already have queries', function (done) {
-        crawler._request({
-            url: 'http://www.google.com/?query=something'
-        }, function () {
-            expect(http.request.calls[0].args[0].path).toBe('/?query=something&ModPagespeed=off');
             done();
         });
     });
