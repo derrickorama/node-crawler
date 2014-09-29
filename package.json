@@ -18,7 +18,8 @@
     "cheerio": "^0.12.4",
     "phantom": "^0.6.1",
     "winston": "^0.7.3",
-    "tough-cookie": "^0.12.1"
+    "tough-cookie": "^0.12.1",
+    "underscore": "^1.7.0"
   },
   "license": "MIT",
   "main": "./crawler",
