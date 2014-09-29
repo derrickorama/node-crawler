@@ -58,53 +58,9 @@ describe('Page instantiation', function () {
         expect(page.isExternal).toBe(true);
     });
 
-    it('sets "_ph" to an object with an "exit" method', function () {
-        var page = new Page();
-        expect(page._ph).toEqual({
-            exit: jasmine.any(Function)
-        });
-    });
-
-    it('sets "phWaits" to an empty array', function () {
-        var page = new Page();
-        expect(page.phWaits).toEqual([]);
-    });
-
     it('removes the hash from a URL', function () {
         var page = new Page('http://domain.com/page#blahblah');
         expect(page.url).toBe('http://domain.com/page');
-    });
-
-    it('sets "_phPage" to an object with a property of "evaluate"', function () {
-        var page = new Page();
-        expect(page._phPage.hasOwnProperty('evaluate')).toBe(true);
-    });
-
-    describe('_phPage.evaluate', function () {
-        var mockCallback;
-        var mockEvaluate;
-        var page;
-
-        beforeEach(function () {
-            page = new Page();
-            mockEvaluate = jasmine.createSpy('evaluate');
-            mockCallback = jasmine.createSpy('callback');
-            spyOn(winston, 'error');
-            page._phPage.evaluate(mockEvaluate, mockCallback);
-        });
-
-        it('does not call evaluate argument', function () {
-            expect(mockEvaluate).not.toHaveBeenCalled();
-        });
-
-        it('logs an error', function () {
-            expect(winston.error).toHaveBeenCalledWith('Error: Page was not rendered.');
-        });
-
-        it('executes the callback with no parameters', function () {
-            expect(mockCallback).toHaveBeenCalledWith();
-        });
-    
     });
 
 });

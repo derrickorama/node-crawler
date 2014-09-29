@@ -38,16 +38,6 @@ describe('Crawler initialization', function () {
 		expect(crawler.excludePatterns).toEqual(['/some/pattern.*']);
 	});
 
-	it('sets "render" to false by default', function () {
-		var crawler = new Crawler();
-		expect(crawler.render).toBe(false);
-	});
-
-	it('sets "render" to the supplied "render" value', function () {
-		var crawler = new Crawler({ render: true });
-		expect(crawler.render).toBe(true);
-	});
-
 	it('sets "workers" to 4 by default', function () {
 		var crawler = new Crawler();
 		expect(crawler.workers).toBe(4);

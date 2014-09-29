@@ -4,7 +4,6 @@ var https = require('https');
 var urllib = require('url');
 var async = require('async');
 var cheerio = require('cheerio');
-var phantom = require('phantom');
 var tough = require('tough-cookie');
 var winston = require('winston');
 var _ = require('underscore');
@@ -41,7 +40,6 @@ var Crawler = function (params) {
 	this.onError = params.onError || function () {};
 	this.onPageCrawl = params.onPageCrawl || function () {};
 	this.onRedirect = params.onRedirect || function () {};
-	this.render = params.render || false;
 	this.retries = params.retries || 0;
 	this.strictSSL = params.strictSSL || false;
 	this.timeout = params.timeout || 60000;
@@ -62,23 +60,12 @@ var Page = function (url, referrer, isExternal) {
 	this.links = [];
 	this.referrer = referrer;
 	this.isExternal = isExternal || false;
-	this._ph = {
-		exit: function () {}
-	};
-	this._phPage = {
-		evaluate: function (evaluate, callback) {
-			winston.error(page.PAGE_NOT_RENDERED_ERROR);
-			callback();
-		}
-	};
-	this.phWaits = [];
 
 	// Remove hash from URL
 	this.url = this.url.replace(/#.*/gi, '');
 };
 
 Page.prototype = {
-	PAGE_NOT_RENDERED_ERROR: 'Error: Page was not rendered.',
 	dom: function () {
 		var $;
 
@@ -110,29 +97,6 @@ Page.prototype = {
 				page.addLink(href);
 			}
 		});
-	},
-	render: function (callback) {
-		var page = this;
-		callback(this._phPage, function (checkID) {
-			page.phExit(checkID);
-		});
-	},
-	phExit: function (id) {
-		// Find ID
-		var index;
-
-		// Remove ID from array
-		if (id) {
-			index = this.phWaits.indexOf(id);
-			if (index > -1) {
-				this.phWaits.splice(index, 1);
-			}
-		}
-
-		// If no other IDs are present, close PhantomJS
-		if (this.phWaits.length === 0) {
-			this._ph.exit();
-		}
 	}
 };
 
@@ -141,22 +105,6 @@ Crawler.prototype = {
 		var baseURLData = urllib.parse(base);
 		var urlData = urllib.parse(url);
 		return urlData.protocol !== baseURLData.protocol || urlData.host !== baseURLData.host;
-	},
-	_renderPage: function (page, finish) {
-		phantom.create(function (ph) {
-			ph.createPage(function (phPage) {
-				phPage.open(page.url, function (status) {
-					if (status !== 'success') {
-						winston.error('Unable to render page: ' + page.url);
-					}
-
-					page._ph = ph;
-					page._phPage = phPage;
-
-					finish();
-				});
-			});
-		});
 	},
 	_responseSuccess: function (pageInfo, response, body, callback) {
 		/*jshint scripturl:true */
@@ -379,19 +327,8 @@ Crawler.prototype = {
 				page.type = response.headers['content-type'].replace(/;.*/g, '').replace(/(^\s+|\s+$)/g, '');
 			}
 
-			if (crawler.render === true) {
-				crawler._renderPage(pageInfo.page, function () {
-					done(error, response, body);
-				});
-				return false;
-			}
-
-			done(error, response, body);
-		});
-
-		function done(error, response, body) {
 			crawler._onResponse(pageInfo, error, response, body, finishCallback);
-		}
+		});
 	},
 	_processRedirect: function (pageInfo, finalURL, response) {
 		/*
