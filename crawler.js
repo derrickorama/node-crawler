@@ -184,19 +184,26 @@ Crawler.prototype = {
 		var called = false;
 		var error = null;
 		var errorTimeout;
+		var redirects = 0;
 		var req;
+		var requestTimeout;
 		var response;
 
 		var COMMON_MEDIA_EXT = /\.(?:3gp|aif|asf|asx|avi|flv|iff|m3u|m4a|m4p|m4v|mov|mp3|mp4|mpa|mpg|mpeg|ogg|ra|raw|rm|swf|vob|wav|wma|wmv)$/;
 
 		// Set timeout for request
-		var requestTimeout = setTimeout(function () {
-			if (req) {
-				req.abort();
-			}
-			error = { message: 'Request timed out.', code: 'ETIMEDOUT' };
-			finish();
-		}, params.timeout || 30000);
+		function waitForTimeout() {
+			clearTimeout(requestTimeout);
+			requestTimeout = setTimeout(function () {
+				if (req) {
+					req.abort();
+				}
+				error = { message: 'Request timed out.', code: 'ETIMEDOUT' };
+				finish();
+			}, params.timeout || 30000);
+		}
+
+		waitForTimeout();
 
 		function doRequest(url, useAuth) {
 			var urlData = urllib.parse(url);
@@ -249,6 +256,18 @@ Crawler.prototype = {
 
 						// Peform redirect
 						req.abort();
+
+						if (redirects > 9) {
+							error = {
+								code: 'MAX_REDIRECTS_REACHED',
+								message: 'The requested URL has redirected more than 9 times. This could indicate an infinite redirect loop.'
+							};
+							finish();
+							return;
+						}
+
+						waitForTimeout();
+						redirects++;
 						doRequest(urllib.resolve(url, response.headers.location));
 						return;
 					}

@@ -100,37 +100,4 @@ describe('Crawler requests feature', function () {
 		crawler.queue('https://www.google.com');
 	});
 
-	it('follows redirects', function (done) {
-		
-		var crawler = new Crawler({
-			onPageCrawl: function (page) {
-				expect(page.url).toBe('http://localhost:6767/final');
-			},
-			onDrain: function () {
-				server.close();
-				done();
-			}
-		});
-
-		var server = http.createServer(function (req, res) {
-            var status = 200;
-            var responseBody = '';
-            res.setHeader('Content-Type', 'text/html');
-
-            if (req.url.indexOf('/redirect') > -1) {
-                status = 301;
-                responseBody = http.STATUS_CODES[status] + '. Redirecting to /final';
-                res.setHeader('Content-Type', 'text/plain');
-
-                // Respond
-                res.statusCode = status;
-                res.setHeader('Location', '/final');
-            }
-            res.end(responseBody);
-        }).listen(6767);
-
-		crawler.queue('http://localhost:6767/redirect');
-
-	});
-
 });
