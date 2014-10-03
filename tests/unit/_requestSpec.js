@@ -259,14 +259,4 @@ describe('Crawler._request method', function () {
         });
     });
 
-    it('uses basic authentication if crawler.auth contains credentials', function (done) {
-        crawler._request({
-            url: 'http://www.google.com/?query=something',
-            auth: { username: 'user', password: 'pass' }
-        }, function () {
-            expect(http.request.calls[0].args[0].headers.Authorization).toBe('Basic ' + new Buffer('user:pass').toString('base64'));
-            done();
-        });
-    });
-
 });

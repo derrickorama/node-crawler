@@ -198,7 +198,7 @@ Crawler.prototype = {
 			finish();
 		}, params.timeout || 30000);
 
-		function doRequest(url) {
+		function doRequest(url, useAuth) {
 			var urlData = urllib.parse(url);
 			var requestFunc = http;
 			var query = urlData.search || '';
@@ -220,7 +220,7 @@ Crawler.prototype = {
 					headers: _.extend({
 						'cookie': crawler.jar ? crawler.jar.getCookiesSync(urlData.href).join('; ') : '',
 						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36',
-						'Authorization': params.auth ? 'Basic ' + new Buffer(params.auth.username + ':' + params.auth.password).toString('base64') : '',
+						'Authorization': useAuth && params.auth ? 'Basic ' + new Buffer(params.auth.username + ':' + params.auth.password).toString('base64') : '',
 						'PageSpeed': 'off' // disable ModPageSpeed
 					}, params.headers || {})
 				}, function (res) {
@@ -231,6 +231,7 @@ Crawler.prototype = {
 					// Set response.url to current URL
 					response.url = url;
 
+					// Follow redirect
 					if (
 						response.statusCode &&
 						response.statusCode.toString().indexOf('30') === 0 &&
@@ -249,6 +250,18 @@ Crawler.prototype = {
 						// Peform redirect
 						req.abort();
 						doRequest(urllib.resolve(url, response.headers.location));
+						return;
+					}
+
+					// Try to authenticate
+					if (
+						response.statusCode &&
+						response.statusCode === 401 &&
+						params.auth
+					) {
+						// Use credentials
+						req.abort();
+						doRequest(url, true);
 						return;
 					}
 
