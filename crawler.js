@@ -253,8 +253,9 @@ Crawler.prototype = {
 						return;
 					}
 
-					// Try to authenticate
+					// Try to authenticate internal 401s
 					if (
+						params.isExternal !== true &&
 						response.statusCode &&
 						response.statusCode === 401 &&
 						params.auth
