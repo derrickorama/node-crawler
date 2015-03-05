@@ -225,8 +225,10 @@ Crawler.prototype = {
 					path: urlData.pathname + query,
 					rejectUnauthorized: params.hasOwnProperty('strictSSL') ? params.strictSSL : false,
 					headers: _.extend({
+						'Accept-Encoding': 'gzip, deflate, sdch',
+						'Accept-Language': 'en-US,en;q=0.8',
 						'cookie': crawler.jar ? crawler.jar.getCookiesSync(urlData.href).join('; ') : '',
-						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.149 Safari/537.36',
+						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36',
 						'Authorization': useAuth && params.auth ? 'Basic ' + new Buffer(params.auth.username + ':' + params.auth.password).toString('base64') : '',
 						'PageSpeed': 'off' // disable ModPageSpeed
 					}, params.headers || {})
