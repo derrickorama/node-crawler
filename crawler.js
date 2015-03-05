@@ -243,6 +243,7 @@ Crawler.prototype = {
 					path: urlData.pathname + query,
 					rejectUnauthorized: params.hasOwnProperty('strictSSL') ? params.strictSSL : false,
 					headers: _.extend({
+						'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
 						'Accept-Encoding': 'gzip, sdch',
 						'Accept-Language': 'en-US,en;q=0.8',
 						'cookie': crawler.jar ? crawler.jar.getCookiesSync(urlData.href).join('; ') : '',

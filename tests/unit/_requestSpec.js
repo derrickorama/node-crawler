@@ -83,6 +83,7 @@ describe('Crawler._request method', function () {
                 method: 'GET',
                 rejectUnauthorized: false,
                 headers: {
+                    'Accept': jasmine.any(String),
                     'Accept-Encoding': jasmine.any(String),
                     'Accept-Language': jasmine.any(String),
                     'cookie': jasmine.any(String),
@@ -108,6 +109,7 @@ describe('Crawler._request method', function () {
                 method: 'GET',
                 rejectUnauthorized: false,
                 headers: {
+                    'Accept': jasmine.any(String),
                     'Accept-Encoding': jasmine.any(String),
                     'Accept-Language': jasmine.any(String),
                     'cookie': jasmine.any(String),
@@ -177,6 +179,7 @@ describe('Crawler._request method', function () {
                 method: 'GET',
                 rejectUnauthorized: false,
                 headers: {
+                    'Accept': jasmine.any(String),
                     'Accept-Encoding': jasmine.any(String),
                     'Accept-Language': jasmine.any(String),
                     'cookie': jasmine.any(String),
