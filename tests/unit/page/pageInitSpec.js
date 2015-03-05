@@ -1,23 +1,23 @@
 var urllib = require('url');
-var winston = require('winston');
 var Page = require('../../../crawler.js').Page;
 
 describe('Page instantiation', function () {
+  'use strict';
 
     beforeEach(function () {
         spyOn(urllib, 'parse').andReturn('my parsed URL object');
     });
-    
+
     it('sets "url" to an empty string by default', function () {
         var page = new Page();
         expect(page.url).toBe('');
     });
-    
+
     it('sets "url" to supplied "url" value', function () {
         var page = new Page('http://domain.com');
         expect(page.url).toBe('http://domain.com');
     });
-    
+
     it('sets "urlData" to a parsed URL object', function () {
         var page = new Page();
         expect(page.urlData).toBe('my parsed URL object');
@@ -45,7 +45,7 @@ describe('Page instantiation', function () {
 
     it('sets referrer to supplied referrer', function () {
         var page = new Page('http://www.google.com/', 'http://referrer.com/');
-        expect(page.referrer).toBe('http://referrer.com/'); 
+        expect(page.referrer).toBe('http://referrer.com/');
     });
 
     it('sets "isExternal" to false by default', function () {

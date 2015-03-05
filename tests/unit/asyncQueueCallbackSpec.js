@@ -1,6 +1,8 @@
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler._asyncQueueCallback method', function () {
+    'use strict';
+
     var crawler;
 
     beforeEach(function () {

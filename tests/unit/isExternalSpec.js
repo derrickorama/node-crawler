@@ -1,6 +1,8 @@
 var Crawler = require('../../crawler').Crawler;
 
 describe('Crawler.isExternal method', function () {
+  'use strict';
+
 	var crawler;
 
 	beforeEach(function () {
@@ -9,7 +11,7 @@ describe('Crawler.isExternal method', function () {
 
 	it('returns true when the domains of the two URLs do not match', function () {
 		var result;
-		
+
 		result = crawler.isExternal('http://www.google.com/', 'http://www.windows.com/');
 		expect(result).toBe(true);
 
@@ -19,7 +21,7 @@ describe('Crawler.isExternal method', function () {
 
 	it('returns true when the protocol of the two URLs do not match', function () {
 		var result;
-		
+
 		result = crawler.isExternal('http://www.google.com/', 'https://www.google.com/');
 		expect(result).toBe(true);
 

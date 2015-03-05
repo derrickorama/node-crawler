@@ -2,6 +2,7 @@ var http = require('http');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler requests feature', function () {
+  'use strict';
 
   var crawler;
   var mockRequest;
@@ -19,12 +20,12 @@ describe('Crawler requests feature', function () {
         statusCode: 200,
         on: jasmine.createSpy('response.on')
     };
-    
+
     spyOn(http, 'request');
 
   });
 
-  xit('uses basic authentication if crawler.auth contains credentials (only on re-request)', function (done) {
+  it('uses basic authentication if crawler.auth contains credentials (only on re-request)', function (done) {
     mockResponse = {
         headers: {},
         statusCode: 401,
@@ -50,7 +51,7 @@ describe('Crawler requests feature', function () {
         username: 'user',
         password: 'pass'
       },
-      onPageCrawl: function (page, response) {
+      onPageCrawl: function () {
         expect(http.request.calls[0].args[0].headers.Authorization).toBe('');
         expect(http.request.calls[1].args[0].headers.Authorization).toBe('Basic ' + new Buffer('user:pass').toString('base64'));
         done();
@@ -58,7 +59,7 @@ describe('Crawler requests feature', function () {
     });
     crawler.queue('http://www.google.com/', false);
   });
-  
+
   it('does not use authentication on external links', function (done) {
     var mainResponse = {
         headers: {
@@ -68,7 +69,7 @@ describe('Crawler requests feature', function () {
         on: function (event, callback) {
           setTimeout(function () {
             if (event === 'data') {
-              callback('<a href="http://domain.com"></a>');
+              callback(new Buffer('<a href="http://domain.com"></a>'));
               return false;
             }
             callback('');
@@ -104,7 +105,7 @@ describe('Crawler requests feature', function () {
         username: 'user',
         password: 'pass'
       },
-      onPageCrawl: function (page, response) {},
+      onPageCrawl: function () {},
       onError: function () {
         expect(http.request.calls[1].args[0].headers.Authorization).toBe('');
         done();

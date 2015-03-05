@@ -1,6 +1,7 @@
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler link crawling feature', function () {
+  'use strict';
 
 	var BASIC_LINK_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/basic-link-crawl.html',
 		NON_PAGE_URLS_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/non-page-urls.html',
@@ -210,7 +211,7 @@ describe('Crawler link crawling feature', function () {
 			});
 			crawler.queue('http://domain.com/');
 		});
-	
+
 	});
 
 });

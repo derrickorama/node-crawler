@@ -2,6 +2,8 @@ var cheerio = require('cheerio');
 var Page = require('../../../crawler.js').Page;
 
 describe('Page.dom method', function () {
+  'use strict';
+
 	var page;
 
 	beforeEach(function () {
@@ -15,23 +17,22 @@ describe('Page.dom method', function () {
 		expect(cheerioSpy.calls.length).toBe(2);
 		expect(cheerioSpy.calls[1].args[0]).toBe('');
 	});
-	
+
 	describe('when page.type is a text file', function () {
-		var consoleSpy;
 
 		beforeEach(function () {
-			consoleSpy = spyOn(console, 'log');
+			spyOn(console, 'log');
 			page.type = 'text/html';
 			page.html = '<html><body>my html</body></html>';
 			page.url = 'http://www.google.com/';
 		});
-	
+
 		it('loads page HTML via cheerio on HTML text files', function () {
 			var cheerioSpy = spyOn(cheerio, 'load');
 			page.dom();
 			expect(cheerioSpy).toHaveBeenCalledWith(page.html);
 		});
-	
+
 		it('loads page HTML via cheerio on plain text files', function () {
 			page.type = 'text/plain';
 			var cheerioSpy = spyOn(cheerio, 'load');
@@ -50,7 +51,7 @@ describe('Page.dom method', function () {
 		// page.dom();
 		// expect(consoleSpy).toHaveBeenCalledWith('Cheerio parsing error: ' + page.url);
 		// });
-	
+
 	});
 
 });

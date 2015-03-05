@@ -5,6 +5,8 @@ var Crawler = require('../../crawler.js').Crawler;
 | _wasCrawled method
 */
 describe('Crawler._wasCrawled method', function () {
+  'use strict';
+
 	var crawler;
 
 	beforeEach(function () {
@@ -40,5 +42,5 @@ describe('Crawler._wasCrawled method', function () {
 		crawler._wasCrawled([]);
 		crawler._wasCrawled({});
 	});
-	
+
 });

@@ -2,6 +2,7 @@ var _ = require('underscore');
 var Page = require('../../crawler.js').Page;
 
 describe('Crawler page', function () {
+  'use strict';
 
 	/*
 	| URL setting

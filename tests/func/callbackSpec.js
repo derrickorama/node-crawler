@@ -3,6 +3,8 @@ var winston = require('winston');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler callbacks feature', function () {
+  'use strict';
+
 
 	var NON_200_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/page-with-404s.html';
 
@@ -179,7 +181,7 @@ describe('Crawler callbacks feature', function () {
 		var server;
 
 		var crawler = new Crawler({
-			onPageCrawl: function () {
+			onPageCrawl: function (page) {
 				pagesCrawled++;
 			},
 			onError: function (page, error) {
@@ -195,7 +197,7 @@ describe('Crawler callbacks feature', function () {
 		});
 
 		// Mock request
-		var realRequest = crawler._request;
+		var realRequest = crawler._request.bind(crawler);
 		var mockRequest = function (params, callback) {
 			if (params.url === 'http://domain.com/') {
 				callback(null, { statusCode: 200, headers: { 'content-type': 'text/html' } }, '<a href="http://localhost:6767/">external link</a>');
@@ -248,10 +250,11 @@ describe('Crawler callbacks feature', function () {
 	});
 
 	it('passes the page, error, and response to onError method when an error occurs', function (done) {
+		spyOn(console, 'error');
 		var crawler = new Crawler({
 			onError: function (page, error, response) {
 				expect(page.url).toBe('avascript:/');
-				expect(error.message).toBe('Protocol:avascript: not supported.');
+				expect(error.message).toBe('Protocol "avascript:" not supported. Expected "http:".');
 				expect(response).toEqual({ req: {} });
 			},
 			onDrain: function () {

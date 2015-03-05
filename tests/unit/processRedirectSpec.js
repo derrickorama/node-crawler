@@ -2,6 +2,8 @@ var urllib = require('url');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler._processRedirect method', function () {
+  'use strict';
+
 	var pageInfo, finalURL, response;
 	var crawler;
 	var mockURLData;
@@ -35,7 +37,7 @@ describe('Crawler._processRedirect method', function () {
 
 	describe('- when crawler pages contain the parsed URL -', function () {
 		var result;
-	
+
 		beforeEach(function () {
 			crawler._wasCrawled.andReturn(true);
 			result = crawler._processRedirect(pageInfo, finalURL);
@@ -44,15 +46,13 @@ describe('Crawler._processRedirect method', function () {
 		it('returns null', function () {
 			expect(result).toBe(null);
 		});
-	
+
 	});
 
 	describe('- when crawler pages does not contain the parsed URL -', function () {
-		var result;
-	
 		beforeEach(function () {
 			crawler._wasCrawled.andReturn(false);
-			result = crawler._processRedirect(pageInfo, finalURL);
+			crawler._processRedirect(pageInfo, finalURL);
 		});
 
 		it('returns pageInfo object', function () {
@@ -93,7 +93,7 @@ describe('Crawler._processRedirect method', function () {
 
 			crawler._processRedirect(pageInfo, finalURL, response);
 		});
-	
+
 	});
 
 });

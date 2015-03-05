@@ -1,4 +1,3 @@
-var Buffer = require('buffer').Buffer;
 var http = require('http');
 var https = require('https');
 var urllib = require('url');
@@ -9,6 +8,8 @@ var winston = require('winston');
 var _ = require('underscore');
 
 var Crawler = function (params) {
+	'use strict';
+
 	if (typeof params !== 'object') {
 		params = {};
 	}
@@ -50,7 +51,7 @@ var Crawler = function (params) {
 };
 
 var Page = function (url, referrer, isExternal) {
-	var page = this;
+	'use strict';
 
 	this.url = url || '';
 	this.urlData = urllib.parse(this.url);
@@ -67,6 +68,8 @@ var Page = function (url, referrer, isExternal) {
 
 Page.prototype = {
 	dom: function () {
+		'use strict';
+
 		var $;
 
 		// Cheerio can kill the process during parsing, make sure it doesn't
@@ -83,9 +86,13 @@ Page.prototype = {
 		return $;
 	},
 	addLink: function (url) {
+		'use strict';
+
 		this.links.push(urllib.resolve(this.url, url));
 	},
 	setHTML: function (html) {
+		'use strict';
+
 		var page = this;
 
 		this.html = html || '';
@@ -102,12 +109,15 @@ Page.prototype = {
 
 Crawler.prototype = {
 	isExternal: function (base, url) {
+		'use strict';
+
 		var baseURLData = urllib.parse(base);
 		var urlData = urllib.parse(url);
 		return urlData.protocol !== baseURLData.protocol || urlData.host !== baseURLData.host;
 	},
 	_responseSuccess: function (pageInfo, response, body, callback) {
-		/*jshint scripturl:true */
+		/*eslint no-script-url:0 */
+		'use strict';
 
 		var crawler = this,
 			i,
@@ -147,6 +157,8 @@ Crawler.prototype = {
 		callback('onPageCrawl', [page, response]);
 	},
 	_responseError: function (pageInfo, response, error, callback) {
+		'use strict';
+
 		// Replace response with an object if it is not one already
 		if (_.isObject(response) !== true) {
 			response = {
@@ -162,6 +174,8 @@ Crawler.prototype = {
 		callback('onError', [pageInfo.page, error, response]);
 	},
 	_wasCrawled: function (url) {
+		'use strict';
+
 		if (!url) {
 			url = '';
 		}
@@ -179,8 +193,12 @@ Crawler.prototype = {
 		return false;
 	},
 	_request: function (params, callback) {
+		'use strict';
+
+		var Buffer = require('buffer').Buffer;
+
 		var crawler = this;
-		var body = '';
+		var body = new Buffer('');
 		var called = false;
 		var error = null;
 		var errorTimeout;
@@ -225,7 +243,7 @@ Crawler.prototype = {
 					path: urlData.pathname + query,
 					rejectUnauthorized: params.hasOwnProperty('strictSSL') ? params.strictSSL : false,
 					headers: _.extend({
-						'Accept-Encoding': 'gzip, deflate, sdch',
+						'Accept-Encoding': 'gzip',
 						'Accept-Language': 'en-US,en;q=0.8',
 						'cookie': crawler.jar ? crawler.jar.getCookiesSync(urlData.href).join('; ') : '',
 						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36',
@@ -234,6 +252,8 @@ Crawler.prototype = {
 					}, params.headers || {})
 				}, function (res) {
 					var contentType = '';
+					var deflateBody;
+
 					response = res; // Set response
 					clearTimeout(errorTimeout); // Clear error and try to download
 
@@ -246,7 +266,7 @@ Crawler.prototype = {
 						response.statusCode.toString().indexOf('30') === 0 &&
 						response.headers.location
 					) {
-					
+
 						// Save cookies
 						if (crawler.jar !== false) {
 							_.each(response.headers['set-cookie'], function (cookie) {
@@ -287,6 +307,10 @@ Crawler.prototype = {
 						return;
 					}
 
+					if (response.headers['content-encoding'] === 'gzip') {
+						deflateBody = true;
+					}
+
 					// Update response
 					if (typeof response === 'object' && typeof response.headers === 'object' && response.headers.hasOwnProperty('content-type') === true) {
 						contentType = response.headers['content-type'];
@@ -307,14 +331,28 @@ Crawler.prototype = {
 
 					// Download text/HTML
 					res.on('data', function (data) {
-						body += data.toString();
+						body = Buffer.concat([body, data]);
 					});
 
 					res.on('end', function () {
-						finish();
+						var zlib = require('zlib');
+
+						if (deflateBody === true) {
+							zlib.unzip(body, function(err, buffer) {
+								if (err) {
+									console.error(err);
+								}
+								body = buffer.toString();
+								finish();
+							});
+						} else {
+							body = body.toString();
+							finish();
+						}
 					});
 				});
 			} catch (err) {
+				console.error(err.stack);
 				error = err;
 				finish();
 				return;
@@ -341,6 +379,8 @@ Crawler.prototype = {
 		}
 	},
 	_crawlPage: function (pageInfo, finishCallback) {
+		'use strict';
+
 		var crawler = this;
 		var page = pageInfo.page;
 
@@ -366,6 +406,8 @@ Crawler.prototype = {
 		});
 	},
 	_processRedirect: function (pageInfo, finalURL, response) {
+		'use strict';
+
 		/*
 		| Note: this section was particularly picky. The sequence of events is important.
 		*/
@@ -395,6 +437,8 @@ Crawler.prototype = {
 		return pageInfo;
 	},
 	_onResponse: function (pageInfo, error, response, body, finishCallback) {
+		'use strict';
+
 		// If the crawler was killed before this request was ready, finish the process
 		if (this._killed === true) {
 			finishCallback();
@@ -464,6 +508,8 @@ Crawler.prototype = {
 		}
 	},
 	queue: function (url, referrer, isExternal) {
+		'use strict';
+
 		var crawler = this,
 			urlData = urllib.parse(url),
 			isExclude = false;
@@ -490,7 +536,7 @@ Crawler.prototype = {
 		if (isExclude === true) {
 			return false;
 		}
-		
+
 		// Add page to list of pages
 		this._urlsCrawled.push(url);
 
@@ -505,14 +551,18 @@ Crawler.prototype = {
 		return true;
 	},
 	_asyncQueueCallback: function (callback, args) {
+		'use strict';
+
 		if (callback !== undefined) {
 			this[callback].apply(this, args);
 		}
 	},
 	kill: function () {
+		'use strict';
+
 		this._killed = true;
 		this._queue.tasks = [];
-		this._queue.process = function () {}; // This makes any future calls 
+		this._queue.process = function () {}; // This makes any future calls
 	}
 };
 

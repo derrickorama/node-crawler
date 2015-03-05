@@ -4,8 +4,9 @@ var _ = require('underscore');
 var Crawler = require('../../crawler').Crawler;
 
 describe('Crawler._request method', function () {
+    'use strict';
+
     var crawler;
-    var callback;
     var mockRequest;
     var mockResponse;
     var noResponse;
@@ -41,7 +42,6 @@ describe('Crawler._request method', function () {
 
     beforeEach(function () {
         crawler = new Crawler();
-        callback = jasmine.createSpy('callback');
         noResponse = false;
         mockRequest = {
             abort: jasmine.createSpy('request.abort'),
@@ -128,7 +128,7 @@ describe('Crawler._request method', function () {
         }, function (error, response, body) {
             expect(mockRequest.abort).toHaveBeenCalled();
             expect(error).toEqual({ message: 'Request timed out.', code: 'ETIMEDOUT' });
-            expect(body).toBe('');
+            expect(body.toString()).toBe('');
             done();
         });
     });
@@ -143,7 +143,7 @@ describe('Crawler._request method', function () {
         }, function (error, response, body) {
             expect(error.message).toBe('some error');
             expect(response).toBe(undefined);
-            expect(body).toBe('');
+            expect(body.toString()).toBe('');
             done();
         });
     });
@@ -163,7 +163,7 @@ describe('Crawler._request method', function () {
 
     it('follows redirects', function (done) {
         mockResponse.statusCode = 301;
-        mockResponse.headers['location'] = 'http://www.google.com/some-other-page';
+        mockResponse.headers.location = 'http://www.google.com/some-other-page';
         crawler._request({
             url: 'http://www.google.com/'
         }, function () {
@@ -190,13 +190,13 @@ describe('Crawler._request method', function () {
         });
         setTimeout(function () {
             mockResponse.statusCode = 200;
-            mockResponse.headers['location'] = null;
+            mockResponse.headers.location = null;
         }, 10);
     });
 
     it('follows redirects relative to the url of the current redirect (when domains change)', function (done) {
         mockResponse.statusCode = 301;
-        mockResponse.headers['location'] = 'http://www.bing.com/some-other-page';
+        mockResponse.headers.location = 'http://www.bing.com/some-other-page';
         crawler._request({
             url: 'http://www.google.com/'
         }, function () {
@@ -206,11 +206,11 @@ describe('Crawler._request method', function () {
         });
         setTimeout(function () {
             mockResponse.statusCode = 301;
-            mockResponse.headers['location'] = '/another-page';
+            mockResponse.headers.location = '/another-page';
         }, 10);
         setTimeout(function () {
             mockResponse.statusCode = 200;
-            mockResponse.headers['location'] = null;
+            mockResponse.headers.location = null;
         }, 50);
     });
 
@@ -231,7 +231,7 @@ describe('Crawler._request method', function () {
             isExternal: true
         }, function (error, response, body) {
             expect(mockRequest.abort).toHaveBeenCalled();
-            expect(body).toBe('');
+            expect(body.toString()).toBe('');
             done();
         });
     });
@@ -252,7 +252,7 @@ describe('Crawler._request method', function () {
     it('returns a body on status code 200 requests', function (done) {
         mockResponse.headers['content-type'] = 'text/html';
         mockResponse.on.andCallFake(function (event, callback) {
-            callback('some body');
+            callback(new Buffer('some body'));
         });
         crawler._request({
             url: 'https://www.google.com/'

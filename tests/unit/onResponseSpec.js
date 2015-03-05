@@ -1,6 +1,8 @@
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler._onResponse method', function () {
+  'use strict';
+
 	var body;
 	var crawler;
 	var crawlPageSpy;
@@ -9,7 +11,6 @@ describe('Crawler._onResponse method', function () {
 	var pageInfo;
 	var processRedirectSpy;
 	var successSpy;
-	var queueSpy;
 
 	beforeEach(function () {
 		body = 'my body';
@@ -24,7 +25,7 @@ describe('Crawler._onResponse method', function () {
 		finishCallbackSpy = jasmine.createSpy('finishCallback');
 		processRedirectSpy = spyOn(crawler, '_processRedirect');
 		successSpy = spyOn(crawler, '_responseSuccess');
-		queueSpy = spyOn(crawler, 'queue');
+		spyOn(crawler, 'queue');
 	});
 
 	it('exists', function () {
@@ -50,7 +51,7 @@ describe('Crawler._onResponse method', function () {
 		it('returns false', function () {
 			expect(result).toBe(false);
 		});
-	
+
 		it('runs finish callback', function () {
 			expect(finishCallbackSpy).toHaveBeenCalled();
 		});
@@ -66,12 +67,11 @@ describe('Crawler._onResponse method', function () {
 		it('does not run _crawlPage', function () {
 			expect(crawlPageSpy).not.toHaveBeenCalled();
 		});
-	
+
 	});
 
 	describe('- on redirect -', function () {
 		var response;
-		var result;
 
 		beforeEach(function () {
 			pageInfo.page.url = 'http://www.google.com/';
@@ -80,12 +80,12 @@ describe('Crawler._onResponse method', function () {
 		});
 
 		it('marks pages as external when final URL is not on the same domain', function () {
-			result = crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
+			crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
 			expect(pageInfo.page.isExternal).toBe(true);
 		});
 
 		it('calls _processRedirect', function () {
-			result = crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
+			crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
 			expect(processRedirectSpy).toHaveBeenCalledWith(pageInfo, response.url, response);
 		});
 
@@ -93,9 +93,9 @@ describe('Crawler._onResponse method', function () {
 
 			beforeEach(function () {
 				processRedirectSpy.andReturn(null);
-				result = crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
+				crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
 			});
-		
+
 			it('executes the finishCallback', function () {
 				expect(finishCallbackSpy).toHaveBeenCalled();
 			});
@@ -107,7 +107,7 @@ describe('Crawler._onResponse method', function () {
 			it('does not execute _responseError', function () {
 				expect(failureSpy).not.toHaveBeenCalled();
 			});
-		
+
 		});
 
 		describe('when _processRedirect returns non-null', function () {
@@ -117,22 +117,22 @@ describe('Crawler._onResponse method', function () {
 			});
 
 			it('executes _responseSuccess if successful', function () {
-				result = crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
+				crawler._onResponse(pageInfo, null, response, '', finishCallbackSpy);
 				expect(successSpy.calls[0].args[0]).toEqual({ page: { url: 'http://www.alreadycrawled.com/' } });
 			});
 
 			it('executes _responseError if failed', function () {
-				result = crawler._onResponse(pageInfo, true, response, '', finishCallbackSpy);
+				crawler._onResponse(pageInfo, true, response, '', finishCallbackSpy);
 				expect(failureSpy.calls[0].args[0]).toEqual({ page: { url: 'http://www.alreadycrawled.com/' } });
 			});
-		
+
 		});
 
 	});
 
 	describe('on 200 response', function () {
 		var response;
-		
+
 		beforeEach(function () {
 			response = {
 				statusCode: 200
@@ -157,12 +157,12 @@ describe('Crawler._onResponse method', function () {
 			crawler._onResponse(pageInfo, true, response, body, finishCallbackSpy);
 			expect(successSpy).not.toHaveBeenCalled();
 		});
-	
+
 	});
 
 	describe('on non 200 response', function () {
 		var response;
-		
+
 		beforeEach(function () {
 			response = {
 				statusCode: 400
@@ -179,12 +179,12 @@ describe('Crawler._onResponse method', function () {
 		});
 
 		onErrorSpecs(response, null);
-	
+
 	});
 
 	describe('on error', function () {
 		var response;
-		
+
 		beforeEach(function () {
 			response = {
 				statusCode: 200
@@ -201,7 +201,7 @@ describe('Crawler._onResponse method', function () {
 		});
 
 		onErrorSpecs(response, true);
-	
+
 	});
 
 	describe('on parse errors with external links that return 200 and include a content-length header', function () {
@@ -212,7 +212,7 @@ describe('Crawler._onResponse method', function () {
 			response = { statusCode: 200, headers: { 'content-length': '4' } };
 			crawler._onResponse(pageInfo, { code: 'HPE_INVALID_CONSTANT' }, response, body, finishCallbackSpy);
 		});
-	
+
 		it('does not execute _responseError method', function () {
 			expect(failureSpy).not.toHaveBeenCalled();
 		});
@@ -220,7 +220,7 @@ describe('Crawler._onResponse method', function () {
 		it('executes _responseSuccess method', function () {
 			expect(successSpy).toHaveBeenCalledWith(pageInfo, response, body, finishCallbackSpy);
 		});
-	
+
 	});
 
 	function onErrorSpecs(response, error) {

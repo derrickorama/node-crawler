@@ -3,6 +3,8 @@ var tough = require('tough-cookie');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler cookie support', function () {
+  'use strict';
+
 	var cookie;
 	var responseBody;
 	var server;
@@ -24,7 +26,7 @@ describe('Crawler cookie support', function () {
 				res.statusCode = status;
 				res.setHeader('Location', '/show-cookie');
 			} else if (req.url.indexOf('/show-cookie') > -1) {
-				responseBody = req.headers['cookie'];
+				responseBody = req.headers.cookie;
 			}
 
 			res.end(responseBody);

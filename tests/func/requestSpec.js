@@ -1,103 +1,123 @@
+var fs = require('fs');
 var http = require('http');
+var pathlib = require('path');
+var zlib = require('zlib');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler requests feature', function () {
+  'use strict';
 
-	var BASIC_LINK_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/basic-link-crawl.html';
+  var BASIC_LINK_PAGE = 'https://dl.dropboxusercontent.com/u/3531436/node-crawler-tests/basic-link-crawl.html';
 
-	/*
-	| Defaults
-	*/
+  /*
+  | Defaults
+  */
 
-	it('should have a default timeout of 60000', function () {
-		var crawler = new Crawler();
-		expect(crawler.timeout).toBe(60000);
-	});
+  it('should have a default timeout of 60000', function () {
+    var crawler = new Crawler();
+    expect(crawler.timeout).toBe(60000);
+  });
 
-	it('should not use strict ssl by default', function () {
-		var crawler = new Crawler();
-		expect(crawler.strictSSL).toBe(false);
-	});
+  it('should not use strict ssl by default', function () {
+    var crawler = new Crawler();
+    expect(crawler.strictSSL).toBe(false);
+  });
 
-	it('should have a default retries property of 0', function () {
-		var crawler = new Crawler();
-		expect(crawler.retries).toBe(0);
-	});
+  it('should have a default retries property of 0', function () {
+    var crawler = new Crawler();
+    expect(crawler.retries).toBe(0);
+  });
 
-	/*
-	| Settings
-	*/
+  /*
+  | Settings
+  */
 
-	it('should change the timeout of a request based on the timeout specified', function (done) {
-		var crawler = new Crawler({
-			timeout: 1000,
-			crawlExternal: true,
-			onDrain: function () {
-				var timeEnd = new Date();
-				// Make sure the timing falls within .1 seconds of the timeout
-				expect((timeEnd - timeStart)/1000).toBeLessThan(5);
-				done();
-			}
-		});
-		
-		expect(crawler.timeout).toBe(1000);
+  it('should change the timeout of a request based on the timeout specified', function (done) {
+    var crawler = new Crawler({
+      timeout: 1000,
+      crawlExternal: true,
+      onDrain: function () {
+        var timeEnd = new Date();
+        // Make sure the timing falls within .1 seconds of the timeout
+        expect((timeEnd - timeStart) / 1000).toBeLessThan(5);
+        done();
+      }
+    });
 
-		var timeStart = new Date();
-		crawler.queue('http://dropbox.com', true);
-	});
+    expect(crawler.timeout).toBe(1000);
 
-	it('should allow you to turn on strict ssl', function (done) {
-		var crawler = new Crawler({
-			crawlExternal: true,
-			onPageCrawl: function () {
-				done();
-			},
-			strictSSL: true
-		});
-		expect(crawler.strictSSL).toBe(true);
-		crawler.queue(BASIC_LINK_PAGE, true);
-	});
+    var timeStart = new Date();
+    crawler.queue('http://dropbox.com', true);
+  });
 
-	it('should change number of retries if specified', function () {
-		var crawler = new Crawler({ retries: 1 });
-		expect(crawler.retries).toBe(1);
-	});
+  it('should allow you to turn on strict ssl', function (done) {
+    var crawler = new Crawler({
+      crawlExternal: true,
+      onPageCrawl: function () {
+        done();
+      },
+      strictSSL: true
+    });
+    expect(crawler.strictSSL).toBe(true);
+    crawler.queue(BASIC_LINK_PAGE, true);
+  });
 
-	/*
-	| Actual request
-	*/
+  it('should change number of retries if specified', function () {
+    var crawler = new Crawler({ retries: 1 });
+    expect(crawler.retries).toBe(1);
+  });
 
-	it('does not download contents of non-text content-types', function (done) {
+  /*
+  | Actual request
+  */
 
-		var crawler = new Crawler({
-			onPageCrawl: function (page) {
-				expect(page.html).toBe('');
-			},
-			onDrain: function () {
-				done();
-			}
-		});
+  it('does not download contents of non-text content-types', function (done) {
 
-		spyOn(crawler, '_request').andCallFake(function (params, callback) {
-			callback(null, {
-				type: 'application/pdf'
-			}, 'some body');
-		});
+    var crawler = new Crawler({
+      onPageCrawl: function (page) {
+        expect(page.html).toBe('');
+      },
+      onDrain: function () {
+        done();
+      }
+    });
 
-		crawler.queue('http://domain.com');
-	});
+    spyOn(crawler, '_request').andCallFake(function (params, callback) {
+      callback(null, {
+        type: 'application/pdf'
+      }, 'some body');
+    });
 
-	it('supports HTTPS urls', function (done) {
-		var crawler = new Crawler({
-			crawlExternal: true,
-			onPageCrawl: function (page) {
-				expect(page.url).toBe('https://www.google.com/');
-				crawler.kill();
-				done();
-			}
-		});
+    crawler.queue('http://domain.com');
+  });
 
-		crawler.queue('https://www.google.com');
-	});
+  it('supports HTTPS urls', function (done) {
+    var crawler = new Crawler({
+      crawlExternal: true,
+      onPageCrawl: function (page) {
+        expect(page.url).toBe('https://www.google.com/');
+        crawler.kill();
+        done();
+      }
+    });
+
+    crawler.queue('https://www.google.com');
+  });
+
+  it('supports gzip/deflating', function (done) {
+    var server = http.createServer(function(req, res) {
+      var raw = fs.createReadStream(pathlib.join(__dirname, 'assets', 'some.txt'));
+      res.writeHead(200, { 'content-encoding': 'gzip', 'content-type': 'text/html' });
+      raw.pipe(zlib.createGzip()).pipe(res);
+    }).listen(6767);
+    var crawler = new Crawler({
+      onPageCrawl: function (page) {
+        expect(page.html).toBe('some text');
+        server.close();
+        done();
+      }
+    });
+    crawler.queue('http://localhost:6767');
+  });
 
 });

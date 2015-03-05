@@ -1,6 +1,7 @@
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler queue', function () {
+  'use strict';
 
 	var mockResponse = function (params, callback) {
 		callback(null, { statusCode: 200, req: { method: 'GET' } }, '');

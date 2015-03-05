@@ -1,6 +1,8 @@
 var Page = require('../../../crawler.js').Page;
 
 describe('Page.addLink method', function () {
+  'use strict';
+
   var page;
 
   beforeEach(function () {

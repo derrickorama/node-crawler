@@ -1,4 +1,6 @@
 (function () {
+	'use strict';
+
 	var argv = require('optimist').argv;
 	var _ = require('underscore');
 	var Crawler = require('./crawler.js').Crawler;

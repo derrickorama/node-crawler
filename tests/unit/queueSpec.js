@@ -7,6 +7,8 @@ var Page = require('../../crawler.js').Page;
 */
 
 describe('Crawler.queue method', function () {
+    'use strict';
+
     var crawler;
     var asyncQueueSpy;
 
@@ -27,7 +29,7 @@ describe('Crawler.queue method', function () {
             crawler._crawlExternal = false;
             result = crawler.queue('http://www.google.com', 'http://www.referrer.com/', true);
         });
-    
+
         it('returns false', function () {
             expect(result).toBe(false);
         });
@@ -39,7 +41,7 @@ describe('Crawler.queue method', function () {
         it('does not add url to list of pages', function () {
             expect(crawler._urlsCrawled).not.toContain('http://www.google.com/');
         });
-    
+
     });
 
     it('uses the parse method of the url module to create a canonicalized URL', function () {
@@ -72,7 +74,7 @@ describe('Crawler.queue method', function () {
         beforeEach(function () {
             crawler.excludePatterns = ['/Section/Page\\.shtml', '.*whatever\\.shtml'];
         });
-    
+
         it('returns false if a URL matches a pattern', function () {
             var result;
 
@@ -92,7 +94,7 @@ describe('Crawler.queue method', function () {
             expect(result).toBe(true);
             expect(crawler._urlsCrawled).toContain('http://domain.com/Other-Section/Page.shtml');
         });
-    
+
     });
 
     describe('page addition', function () {
@@ -108,17 +110,17 @@ describe('Crawler.queue method', function () {
         });
 
         describe('isExternal property', function () {
-            
+
             it('sets crawlLinks property to false if isExternal is true', function () {
                 crawler.queue('http://www.google.com/', null, true);
                 expect(asyncQueueSpy.calls[0].args[0].crawlLinks).toBe(false);
             });
-            
+
             it('sets crawlLinks property to true if isExternal is false', function () {
                 crawler.queue('http://www.google.com/', null, false);
                 expect(asyncQueueSpy.calls[0].args[0].crawlLinks).toBe(true);
             });
-            
+
             it('sets crawlLinks property to true if not specified', function () {
                 crawler.queue('http://www.google.com/');
                 expect(asyncQueueSpy.calls[0].args[0].crawlLinks).toBe(true);
@@ -150,7 +152,7 @@ describe('Crawler.queue method', function () {
             asyncQueueCallbackSpy = spyOn(crawler._asyncQueueCallback, 'apply');
             crawler.queue('http://www.google.com/');
         });
-        
+
         it('adds the URL data to the async.queue', function () {
             expect(asyncQueueSpy).toHaveBeenCalled();
             expect(asyncQueueSpy.calls[0].args[0].page instanceof Page).toBe(true);
@@ -162,7 +164,7 @@ describe('Crawler.queue method', function () {
             asyncQueueSpy.calls[0].args[1]('args');
             expect(asyncQueueCallbackSpy.calls[0].args[0]).toEqual(crawler);
             expect(asyncQueueCallbackSpy.calls[0].args[1]).toEqual({
-                '0': 'args',
+                '0': 'args'
             });
         });
 

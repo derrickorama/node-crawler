@@ -3,6 +3,7 @@ var _ = require('underscore');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler initialization', function () {
+  'use strict';
 
 	beforeEach(function () {
 		spyOn(async, 'queue').andReturn({});
@@ -49,6 +50,7 @@ describe('Crawler initialization', function () {
 	});
 
 	it('supplies async.queue with the # of workers specified', function () {
+		/*eslint no-new:0 */
 		new Crawler({ workers: 6 });
 		expect(async.queue).toHaveBeenCalledWith(jasmine.any(Function), 6);
 	});

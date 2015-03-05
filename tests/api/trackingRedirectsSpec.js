@@ -3,6 +3,8 @@ var _ = require('underscore');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('API: tracking redirects', function () {
+    'use strict';
+
     var crawler;
     var mockOnDrain;
     var mockOnPageCrawl;

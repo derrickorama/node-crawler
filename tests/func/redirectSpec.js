@@ -3,6 +3,7 @@ var winston = require('winston');
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler redirects', function () {
+  'use strict';
 
   var server;
 
@@ -77,7 +78,7 @@ describe('Crawler redirects', function () {
   it('throws error if crawler is redirected > 9 times', function (done) {
     spyOn(winston, 'error'); // silence winston
     var crawler = new Crawler({
-      onPageCrawl: function () {
+      onPageCrawl: function (page) {
         expect(page.url).not.toBe('http://localhost:6767/redirect-infinite');
       },
       onError: function (page, error) {

@@ -1,16 +1,17 @@
 var Crawler = require('../../crawler.js').Crawler;
 
 describe('Crawler._responseError method', function () {
+  'use strict';
+
 	var crawler;
 	var callbackSpy;
-	var crawlPageSpy;
 	var error;
 	var pageInfo;
 	var response;
 
 	beforeEach(function () {
 		crawler = new Crawler();
-		crawlPageSpy = spyOn(crawler, '_crawlPage');
+		spyOn(crawler, '_crawlPage');
 		callbackSpy = jasmine.createSpy('callbackSpy');
 		error = {
 			code: 'some error'
