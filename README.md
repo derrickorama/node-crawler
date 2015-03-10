@@ -55,10 +55,6 @@ Defaults to **false**. Determines whether crawler will make a request to an exte
 
 Defaults to **[]**. A set of exclude patterns (regexes) that cause the crawler to ignore URLs that match the supplied patterns.
 
-### render
-
-Defaults to **false**. Determines whether crawler should render each page using PhantomJS.
-
 ### retries
 
 Defaults to **0**. Determines how many request retries the crawler will attempt upon encountering a failure.
@@ -115,10 +111,6 @@ Boolean set by the third parameter during Page instantiation that determines whe
 
 Array of links found on the page after executing page.setHTML().
 
-### phWaits (experimental)
-
-Array of unique IDs that indicate resources that are using the render function. To use this you simply add an ID to the property.
-
 ### redirects
 
 Array of redirects found for page during a crawl.
@@ -146,24 +138,3 @@ Returns a jQuery-like cheerio object for DOM manipulation/traveral.
 ### setHTML(html String)
 
 Sets the page.html property and finds and adds all anchor tags found on page.
-
-### render(callback Function)
-
-Executes callback with the rendered document (from PhantomJS) and an exit function.
-
-Example:
-
-```js
-page.render(function (browser) {
-    browser.evaluate(function () {
-        /*global document */
-        return document.title;
-    }, function (title) {
-        console.log(title);
-    });
-});
-```
-
-### phExit(id String) (experimental)
-
-Removes supplied "id" from the list of IDs supplied to page.phWaits. If phWaits is empty, the PhantomJS browser will exit.
