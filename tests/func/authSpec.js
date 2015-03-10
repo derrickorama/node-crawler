@@ -35,7 +35,7 @@ describe('Crawler requests feature', function () {
     http.request.andCallFake(function (params, callback) {
       setTimeout(function () {
         // Only accept request when auth is present
-        if (params.headers.Authorization !== '') {
+        if (params.headers.Authorization) {
           mockResponse.statusCode = 200;
           callback(mockResponse);
           return false;
@@ -52,7 +52,7 @@ describe('Crawler requests feature', function () {
         password: 'pass'
       },
       onPageCrawl: function () {
-        expect(http.request.calls[0].args[0].headers.Authorization).toBe('');
+        expect(http.request.calls[0].args[0].headers.Authorization).not.toBeDefined();
         expect(http.request.calls[1].args[0].headers.Authorization).toBe('Basic ' + new Buffer('user:pass').toString('base64'));
         done();
       }
@@ -93,7 +93,7 @@ describe('Crawler requests feature', function () {
 
         // Handle external page
         console.log(params.headers.Authorization);
-        expect(params.headers.Authorization).toBe('');
+        expect(params.headers.Authorization).not.toBeDefined();
         callback(mockResponse);
       }, 10);
       return mockRequest;
@@ -107,7 +107,7 @@ describe('Crawler requests feature', function () {
       },
       onPageCrawl: function () {},
       onError: function () {
-        expect(http.request.calls[1].args[0].headers.Authorization).toBe('');
+        expect(http.request.calls[1].args[0].headers.Authorization).not.toBeDefined();
         done();
       }
     });

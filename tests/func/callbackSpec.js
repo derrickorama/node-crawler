@@ -254,7 +254,7 @@ describe('Crawler callbacks feature', function () {
 		var crawler = new Crawler({
 			onError: function (page, error, response) {
 				expect(page.url).toBe('avascript:/');
-				expect(error.message).toBe('Protocol "avascript:" not supported. Expected "http:".');
+				expect(error.message).toBe('Protocol:avascript: not supported.');
 				expect(response).toEqual({ req: {} });
 			},
 			onDrain: function () {

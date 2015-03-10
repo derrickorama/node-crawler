@@ -228,9 +228,19 @@ Crawler.prototype = {
 			var requestFunc = http;
 			var query = urlData.search || '';
 
+			// Make sure params.headers is an object by default
+			if (!params.headers) {
+				params.headers = {};
+			}
+
 			// Select correct protocol
 			if (urlData.protocol === 'https:') {
 				requestFunc = https;
+			}
+
+			// Add authorization if available and useAuth is flagged
+			if (useAuth && params.auth) {
+				params.headers.Authorization = 'Basic ' + new Buffer(params.auth.username + ':' + params.auth.password).toString('base64');
 			}
 
 			// Attempt request
@@ -248,9 +258,8 @@ Crawler.prototype = {
 						'Accept-Language': 'en-US,en;q=0.8',
 						'cookie': crawler.jar ? crawler.jar.getCookiesSync(urlData.href).join('; ') : '',
 						'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36',
-						'Authorization': useAuth && params.auth ? 'Basic ' + new Buffer(params.auth.username + ':' + params.auth.password).toString('base64') : '',
 						'PageSpeed': 'off' // disable ModPageSpeed
-					}, params.headers || {})
+					}, params.headers)
 				}, function (res) {
 					var contentType = '';
 					var deflateBody;

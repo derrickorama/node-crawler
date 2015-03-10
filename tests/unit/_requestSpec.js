@@ -88,7 +88,6 @@ describe('Crawler._request method', function () {
                     'Accept-Language': jasmine.any(String),
                     'cookie': jasmine.any(String),
                     'User-Agent': jasmine.any(String),
-                    'Authorization': jasmine.any(String),
                     'PageSpeed': 'off'
                 }
             }, jasmine.any(Function));
@@ -114,7 +113,6 @@ describe('Crawler._request method', function () {
                     'Accept-Language': jasmine.any(String),
                     'cookie': jasmine.any(String),
                     'User-Agent': jasmine.any(String),
-                    'Authorization': jasmine.any(String),
                     'PageSpeed': 'off'
                 }
             }, jasmine.any(Function));
@@ -184,7 +182,6 @@ describe('Crawler._request method', function () {
                     'Accept-Language': jasmine.any(String),
                     'cookie': jasmine.any(String),
                     'User-Agent': jasmine.any(String),
-                    'Authorization': jasmine.any(String),
                     'PageSpeed': 'off'
                 }
             }, jasmine.any(Function));
