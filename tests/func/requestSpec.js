@@ -72,23 +72,19 @@ describe('Crawler requests feature', function () {
   */
 
   it('does not download contents of non-text content-types', function (done) {
-
+    var server = http.createServer(function(req, res) {
+      var raw = fs.createReadStream(pathlib.join(__dirname, 'assets', 'pdf-sample.pdf'));
+      res.writeHead(200, { 'content-type': 'application/pdf' });
+      raw.pipe(res);
+    }).listen(6767);
     var crawler = new Crawler({
       onPageCrawl: function (page) {
         expect(page.html).toBe('');
-      },
-      onDrain: function () {
+        server.close();
         done();
       }
     });
-
-    spyOn(crawler, '_request').andCallFake(function (params, callback) {
-      callback(null, {
-        type: 'application/pdf'
-      }, 'some body');
-    });
-
-    crawler.queue('http://domain.com');
+    crawler.queue('http://localhost:6767');
   });
 
   it('supports HTTPS urls', function (done) {

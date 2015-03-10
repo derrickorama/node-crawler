@@ -334,6 +334,8 @@ Crawler.prototype = {
 						// Exclude external pages - we don't care about the content
 						params.isExternal === true
 					) {
+						// Set page HTML to nothing since we haven't downloaded the body yet
+						body = '';
 						req.abort();
 						finish();
 						return;

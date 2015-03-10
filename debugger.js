@@ -27,6 +27,11 @@
 				if (Settings.show['status-codes'] === true) {
 					console.log('Status code: ' + response.statusCode);
 				}
+
+				// Show status codes
+				if (Settings.show.page === true) {
+					console.log('Page Object:', page);
+				}
 			}
 		},
 		defaultOnDrain: function () {
@@ -44,6 +49,11 @@
 				// Show status codes
 				if (Settings.show['status-codes'] === true) {
 					console.log('Status code: ' + response.statusCode);
+				}
+
+				// Show status codes
+				if (Settings.show.page === true) {
+					console.log('Page Object:', page);
 				}
 			}
 		},
@@ -84,6 +94,11 @@
 	// Check for logging specifics
 	if (argv['status-codes']) {
 		Settings.showMe('status-codes');
+	}
+
+	// Check for logging specifics
+	if (argv.page) {
+		Settings.showMe('page');
 	}
 
 	console.log('');
