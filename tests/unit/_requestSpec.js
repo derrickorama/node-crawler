@@ -121,18 +121,6 @@ describe('Crawler._request method', function () {
         });
     });
 
-    it('times out after specified timeout', function (done) {
-        crawler._request({
-            url: 'https://www.google.com/',
-            timeout: 1
-        }, function (error, response, body) {
-            expect(mockRequest.abort).toHaveBeenCalled();
-            expect(error).toEqual({ message: 'Request timed out.', code: 'ETIMEDOUT' });
-            expect(body.toString()).toBe('');
-            done();
-        });
-    });
-
     it('executes callback on error with no response', function (done) {
         noResponse = true;
         mockRequest.on.andCallFake(function (event, callback) {

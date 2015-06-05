@@ -166,6 +166,7 @@ describe('Crawler requests feature', function () {
         // This ends on an error
         expect(https.request.calls[0].args[0].secureProtocol).toEqual(undefined);
         expect(https.request.calls[1].args[0].secureProtocol).toEqual('TLSv1_client_method');
+        expect(https.request.calls[2].args[0].secureProtocol).toEqual('SSLv3_client_method');
         server.close();
         done();
       }

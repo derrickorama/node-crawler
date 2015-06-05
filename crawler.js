@@ -294,7 +294,7 @@ Crawler.prototype = {
 					}
 
 					// Try to resolve secure protocol issues
-					if (resolveSecureProtocol(url, urlData.protocol, useAuth, secureProtocol) === true) {
+					if (resolveSecureProtocol() === true) {
 						return;
 					}
 
@@ -392,16 +392,16 @@ Crawler.prototype = {
 
 					error = { message: 'Request timed out.', code: 'ETIMEDOUT' };
 					finish();
-				}, params.timeout || 30000);
+				}, crawler.timeout);
 			}
 
 			function resolveSecureProtocol() {
+
 				// Do not run the fix if it has already been fixed
 				if (secureProtocolFix === true) {
-					return false;
+					// "true" says that we are applying a fix
+					return true;
 				}
-
-				secureProtocolFix = true;
 
 				if (
 					urlData.protocol === 'https:' &&
@@ -414,6 +414,7 @@ Crawler.prototype = {
 						secureProtocol === undefined || secureProtocol === 'TLSv1_client_method'
 					)
 				) {
+					secureProtocolFix = true;
 					req.abort();
 
 					if (secureProtocol === 'TLSv1_client_method') {
