@@ -148,4 +148,29 @@ describe('Crawler requests feature', function () {
     crawler.queue('https://localhost:6767');
   });
 
+  it('tries different secure protocols when timeout failures are encountered', function (done) {
+    var server = https.createServer({
+      key: fs.readFileSync(pathlib.join(__dirname, '..', 'assets', 'server.key')),
+      cert: fs.readFileSync(pathlib.join(__dirname, '..', 'assets', 'server.crt'))
+    }, function (req, res) {
+      setTimeout(function () {
+        res.end('');
+      }, 150);
+    }).listen(6767);
+
+    spyOn(https, 'request').andCallThrough();
+
+    var crawler = new Crawler({
+      timeout: 100,
+      onError: function () {
+        // This ends on an error
+        expect(https.request.calls[0].args[0].secureProtocol).toEqual(undefined);
+        expect(https.request.calls[1].args[0].secureProtocol).toEqual('TLSv1_client_method');
+        server.close();
+        done();
+      }
+    });
+    crawler.queue('https://localhost:6767');
+  });
+
 });

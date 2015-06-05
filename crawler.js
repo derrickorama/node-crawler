@@ -209,25 +209,14 @@ Crawler.prototype = {
 
 		var COMMON_MEDIA_EXT = /\.(?:3gp|aif|asf|asx|avi|flv|iff|m3u|m4a|m4p|m4v|mov|mp3|mp4|mpa|mpg|mpeg|ogg|ra|raw|rm|swf|vob|wav|wma|wmv)$/;
 
-		// Set timeout for request
-		function waitForTimeout() {
-			clearTimeout(requestTimeout);
-			requestTimeout = setTimeout(function () {
-				if (req) {
-					req.abort();
-				}
-				error = { message: 'Request timed out.', code: 'ETIMEDOUT' };
-				finish();
-			}, params.timeout || 30000);
-		}
-
-		waitForTimeout();
-
 		function doRequest(url, useAuth, secureProtocol) {
 			var urlData = urllib.parse(url);
 			var requestFunc = http;
 			var query = urlData.search || '';
 			var secureProtocolFix = false;
+
+			// Start timeout
+			waitForTimeout();
 
 			// Make sure params.headers is an object by default
 			if (!params.headers) {
@@ -299,8 +288,6 @@ Crawler.prototype = {
 							finish();
 							return;
 						}
-
-						waitForTimeout();
 						redirects++;
 						doRequest(urllib.resolve(url, response.headers.location));
 						return;
@@ -388,6 +375,25 @@ Crawler.prototype = {
 			});
 
 			req.end();
+
+			// Set timeout for request
+			function waitForTimeout() {
+				clearTimeout(requestTimeout);
+				requestTimeout = setTimeout(function () {
+
+					// Make sure this isn't a secure protocol error
+					if (resolveSecureProtocol() === true) {
+						return;
+					}
+
+					if (req) {
+						req.abort();
+					}
+
+					error = { message: 'Request timed out.', code: 'ETIMEDOUT' };
+					finish();
+				}, params.timeout || 30000);
+			}
 
 			function resolveSecureProtocol() {
 				// Do not run the fix if it has already been fixed
