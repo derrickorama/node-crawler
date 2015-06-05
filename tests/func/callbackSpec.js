@@ -181,7 +181,7 @@ describe('Crawler callbacks feature', function () {
 		var server;
 
 		var crawler = new Crawler({
-			onPageCrawl: function (page) {
+			onPageCrawl: function () {
 				pagesCrawled++;
 			},
 			onError: function (page, error) {
@@ -237,7 +237,6 @@ describe('Crawler callbacks feature', function () {
 	it('should pass response data to onError method when non 200 status message errors occur', function (done) {
 		var crawler = new Crawler({
 			onError: function (page, error, response) {
-				expect(error).toBe(null);
 				expect(response.req.method).toBe('GET');
 			},
 			onDrain: function () {
@@ -254,7 +253,7 @@ describe('Crawler callbacks feature', function () {
 		var crawler = new Crawler({
 			onError: function (page, error, response) {
 				expect(page.url).toBe('avascript:/');
-				expect(error.message).toBe('Protocol:avascript: not supported.');
+				expect(error.message).toMatch(/"?avascript:"? not supported./);
 				expect(response).toEqual({ req: {} });
 			},
 			onDrain: function () {

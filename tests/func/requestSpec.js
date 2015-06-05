@@ -1,5 +1,6 @@
 var fs = require('fs');
 var http = require('http');
+var https = require('https');
 var pathlib = require('path');
 var zlib = require('zlib');
 var Crawler = require('../../crawler.js').Crawler;
@@ -34,17 +35,17 @@ describe('Crawler requests feature', function () {
 
   it('should change the timeout of a request based on the timeout specified', function (done) {
     var crawler = new Crawler({
-      timeout: 1000,
+      timeout: 250,
       crawlExternal: true,
       onDrain: function () {
         var timeEnd = new Date();
         // Make sure the timing falls within .1 seconds of the timeout
-        expect((timeEnd - timeStart) / 1000).toBeLessThan(5);
+        expect((timeEnd - timeStart) / 250).toBeLessThan(5);
         done();
       }
     });
 
-    expect(crawler.timeout).toBe(1000);
+    expect(crawler.timeout).toBe(250);
 
     var timeStart = new Date();
     crawler.queue('http://dropbox.com', true);
@@ -114,6 +115,37 @@ describe('Crawler requests feature', function () {
       }
     });
     crawler.queue('http://localhost:6767');
+  });
+
+  it('tries different secure protocols when one fails', function (done) {
+    var iteration = 0;
+
+    var server = https.createServer({
+      key: fs.readFileSync(pathlib.join(__dirname, '..', 'assets', 'server.key')),
+      cert: fs.readFileSync(pathlib.join(__dirname, '..', 'assets', 'server.crt'))
+    }, function(req, res) {
+      if (iteration < 2) {
+        res.writeHead(404);
+        iteration++;
+      } else {
+        res.writeHead(200);
+      }
+      res.end('');
+    }).listen(6767);
+
+    spyOn(https, 'request').andCallThrough();
+
+    var crawler = new Crawler({
+      onError: function () {
+        // This ends on an error
+        expect(https.request.calls[0].args[0].secureProtocol).toEqual(undefined);
+        expect(https.request.calls[1].args[0].secureProtocol).toEqual('TLSv1_client_method');
+        expect(https.request.calls[2].args[0].secureProtocol).toEqual('SSLv3_client_method');
+        server.close();
+        done();
+      }
+    });
+    crawler.queue('https://localhost:6767');
   });
 
 });

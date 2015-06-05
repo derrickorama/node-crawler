@@ -3,6 +3,8 @@
     "node": true
   },
   "rules": {
-    "no-underscore-dangle": false
+    "no-underscore-dangle": false,
+    "no-use-before-define": true,
+    "quotes": [2, "single"]
   }
 }

@@ -3,4 +3,5 @@ init:
 	npm install
 
 test:
-	jasmine-node tests --verbose --captureExceptions
+	jasmine-node tests/func --verbose --captureExceptions
+	jasmine-node tests/unit --verbose --captureExceptions

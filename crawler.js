@@ -223,10 +223,11 @@ Crawler.prototype = {
 
 		waitForTimeout();
 
-		function doRequest(url, useAuth) {
+		function doRequest(url, useAuth, secureProtocol) {
 			var urlData = urllib.parse(url);
 			var requestFunc = http;
 			var query = urlData.search || '';
+			var secureProtocolFix = false;
 
 			// Make sure params.headers is an object by default
 			if (!params.headers) {
@@ -252,6 +253,7 @@ Crawler.prototype = {
 					port: urlData.port,
 					path: urlData.pathname + query,
 					rejectUnauthorized: params.hasOwnProperty('strictSSL') ? params.strictSSL : false,
+					secureProtocol: secureProtocol,
 					headers: _.extend({
 						'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
 						'Accept-Encoding': 'gzip, sdch',
@@ -301,6 +303,11 @@ Crawler.prototype = {
 						waitForTimeout();
 						redirects++;
 						doRequest(urllib.resolve(url, response.headers.location));
+						return;
+					}
+
+					// Try to resolve secure protocol issues
+					if (resolveSecureProtocol(url, urlData.protocol, useAuth, secureProtocol) === true) {
 						return;
 					}
 
@@ -371,11 +378,52 @@ Crawler.prototype = {
 			}
 
 			req.on('error', function (err) {
+				// Make sure this isn't a secure protocol error
+				if (resolveSecureProtocol() === true) {
+					return;
+				}
+
 				error = err;
 				errorTimeout = setTimeout(finish, 10);
 			});
 
 			req.end();
+
+			function resolveSecureProtocol() {
+				// Do not run the fix if it has already been fixed
+				if (secureProtocolFix === true) {
+					return false;
+				}
+
+				secureProtocolFix = true;
+
+				if (
+					urlData.protocol === 'https:' &&
+					(
+						!response ||
+						!response.statusCode ||
+						response.statusCode !== 200
+					) &&
+					(
+						secureProtocol === undefined || secureProtocol === 'TLSv1_client_method'
+					)
+				) {
+					req.abort();
+
+					if (secureProtocol === 'TLSv1_client_method') {
+						// Try the other secure protocol
+						secureProtocol = 'SSLv3_client_method';
+					} else {
+						// Try using nothing
+						secureProtocol = 'TLSv1_client_method';
+					}
+
+					doRequest(url, params.auth, secureProtocol);
+					return true;
+				}
+
+				return false;
+			}
 		}
 
 		doRequest(params.url);
