@@ -1,5 +1,7 @@
 var http = require('http');
+var https = require('https');
 var urllib = require('url');
+var winston = require('winston');
 
 module.exports = function (params, callback) {
   'use strict';
@@ -78,13 +80,13 @@ module.exports = function (params, callback) {
         ) {
 
           // Save cookies
-          if (crawler.jar !== false) {
-            _.each(response.headers['set-cookie'], function (cookie) {
-              crawler.jar.setCookieSync(cookie, urlData.href, {
-                ignoreError: true
-              });
-            });
-          }
+          // if (crawler.jar !== false) {
+          //   response.headers['set-cookie'].forEach(function (cookie) {
+          //     crawler.jar.setCookieSync(cookie, urlData.href, {
+          //       ignoreError: true
+          //     });
+          //   });
+          // }
 
           // Peform redirect
           req.abort();
@@ -155,7 +157,7 @@ module.exports = function (params, callback) {
           if (deflateBody === true) {
             zlib.unzip(body, function(err, buffer) {
               if (err) {
-                console.error(err);
+                winston.error(err);
               }
               body = buffer.toString();
               finish();
@@ -167,7 +169,7 @@ module.exports = function (params, callback) {
         });
       });
     } catch (err) {
-      console.error(err.stack);
+      winston.error(err.stack);
       error = err;
       finish();
       return;

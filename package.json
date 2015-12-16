@@ -4,12 +4,14 @@
   "version": "2.7.1",
   "author": "Derrick Gall",
   "engines": [
-    "node"
+    "node 4.2.x"
   ],
   "devDependencies": {
     "jasmine-node": "^1.14.3",
     "mocha": "^2.3.4",
     "optimist": "^0.6.1",
+    "should": "^8.0.1",
+    "sinon": "^1.17.2",
     "underscore": "^1.6.0"
   },
   "dependencies": {
