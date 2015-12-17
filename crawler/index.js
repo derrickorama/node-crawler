@@ -82,14 +82,6 @@ var urllib = require('url');
       this._finish();
     }
 
-    markCrawled (url) {
-      var urlsCrawled = this._get('urlsCrawled');
-
-      if (urlsCrawled.indexOf(url) === -1) {
-        urlsCrawled.push(url);
-      }
-    }
-
     normalizeUrl (url) {
       var urlData = urllib.parse(url);
       return urlData.href.replace(/#.*/gi, '');
