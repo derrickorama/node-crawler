@@ -1,26 +1,21 @@
 {
   "name": "node-crawler",
   "description": "A web crawler module for Node.js.",
-  "version": "2.7.1",
+  "version": "3.0.0",
   "author": "Derrick Gall",
   "engines": [
     "node 4.2.x"
   ],
   "devDependencies": {
-    "jasmine-node": "^1.14.3",
     "mocha": "^2.3.4",
-    "optimist": "^0.6.1",
     "should": "^8.0.1",
-    "sinon": "^1.17.2",
-    "underscore": "^1.6.0"
+    "sinon": "^1.17.2"
   },
   "dependencies": {
-    "async": "^0.2.10",
-    "cheerio": "^0.12.4",
-    "phantom": "^0.6.1",
-    "tough-cookie": "^0.12.1",
-    "underscore": "^1.7.0",
-    "winston": "^0.7.3"
+    "async": "^1.5.0",
+    "cheerio": "^0.19.0",
+    "tough-cookie": "^2.2.1",
+    "winston": "^2.1.1"
   },
   "license": "MIT",
   "main": "./crawler",

@@ -79,13 +79,13 @@ module.exports = function (params, callback) {
         ) {
 
           // Save cookies
-          // if (crawler.jar !== false) {
-          //   response.headers['set-cookie'].forEach(function (cookie) {
-          //     crawler.jar.setCookieSync(cookie, urlData.href, {
-          //       ignoreError: true
-          //     });
-          //   });
-          // }
+          if (params.jar !== false) {
+            (response.headers['set-cookie'] || []).forEach(function (cookie) {
+              params.jar.setCookieSync(cookie, urlData.href, {
+                ignoreError: true
+              });
+            });
+          }
 
           // Peform redirect
           req.abort();

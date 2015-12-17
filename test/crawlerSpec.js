@@ -233,6 +233,34 @@ describe('Crawler class', function () {
       });
     });
 
+    it('does not include pages that return non-200 statuses', function (done) {
+      server.onUrl('/page-1', function (req, res) {
+        res.writeHead(404); // bad status
+      });
+      crawler.start('http://localhost:8888');
+      crawler.queue('http://localhost:8888/page-1');
+      crawler.on('pageCrawled', function (response) {
+        response.statusCode.should.equal(200);
+        response.url.should.equal('http://localhost:8888/');
+      });
+      crawler.on('finish', function () {
+        done();
+      });
+    });
+
+    it('does not include pages that throw errors', function (done) {
+      server.stop();
+      crawler.start('http://localhost:8888');
+      crawler.queue('http://localhost:8888/page-1');
+      crawler.on('pageCrawled', function (response) {
+        response.statusCode.should.equal(200);
+        response.url.should.equal(null);
+      });
+      crawler.on('finish', function () {
+        done();
+      });
+    });
+
   });
 
   describe('redirects', function () {
@@ -350,6 +378,17 @@ describe('Crawler class', function () {
       });
     });
 
+    it('does not call the error event handlers when a 200 status code is encountered', function (done) {
+      var errorHandler = sinon.spy();
+      server.setStatusCode(400);
+      crawler.start('http://localhost:8888');
+      crawler.on('error', errorHandler);
+      crawler.on('finish', function () {
+        errorHandler.called.should.be.false;
+        done();
+      });
+    });
+
     it('adds the URL to the pages processed', function (done) {
       server.setStatusCode(400);
       crawler.start('http://localhost:8888');
@@ -360,16 +399,18 @@ describe('Crawler class', function () {
     });
 
     it('retries a URL based on crawler\'s "retries" property', function (done) {
-      var http = require('http');
-      var httpRequest = http.request;
+      var attempts = 0;
 
-      sinon.stub(http, 'request', httpRequest);
+      server.onUrl('/', function (req, res) {
+        res.writeHead(400);
+        attempts++;
+      });
 
       server.setStatusCode(400);
       crawler.set('retries', 2);
       crawler.start('http://localhost:8888');
       crawler.on('finish', function () {
-        http.request.callCount.should.equal(3);
+        attempts.should.equal(3);
         done();
       });
     });
@@ -430,7 +471,11 @@ describe('Crawler class', function () {
       crawler.start('http://localhost:8888');
       crawler.queue('http://localhost:8888/page-1');
       crawler.queue('http://localhost:8888/page-2');
-      crawler.kill();
+
+      crawler.on('pageCrawled', function () {
+        crawler.kill(); // kill after first page crawled
+      });
+
       crawler.on('finish', function () {
         crawler.get('urlsCrawled').should.eql(['http://localhost:8888/']);
         done();

@@ -6,17 +6,23 @@ exports.Server = function (port) {
   };
   var _isClosed = false;
   var _redirects = [];
+  var _requestHandlers = {};
   var _statusCode = 200;
 
   var server = http.createServer(function (req, res) {
     'use strict';
 
-    if (_redirects[req.url] !== undefined) {
-      res.writeHead(_redirects[req.url].statusCode, {
-        'Location': _redirects[req.url].toUrl
-      });
+    // Request handlers override all other features
+    if (_requestHandlers.hasOwnProperty(req.url) === true) {
+      _body = _requestHandlers[req.url].reduce((body, callback) => (callback(req, res, body)), _body);
     } else {
-      res.writeHead(_statusCode, _headers);
+      if (_redirects[req.url] !== undefined) {
+        res.writeHead(_redirects[req.url].statusCode, {
+          'Location': _redirects[req.url].toUrl
+        });
+      } else {
+        res.writeHead(_statusCode, _headers);
+      }
     }
 
     res.end(_body);
@@ -25,6 +31,12 @@ exports.Server = function (port) {
   return {
     isClosed: function () {
       return _isClosed;
+    },
+    onUrl: function (url, callback) {
+      if (_requestHandlers.hasOwnProperty(url) !== true) {
+        _requestHandlers[url] = [];
+      }
+      _requestHandlers[url].push(callback);
     },
     redirect: function (fromUrl, toUrl, statusCode) {
       if (statusCode === undefined) {

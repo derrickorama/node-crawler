@@ -1,52 +1,47 @@
-var pathlib = require('path');
 var urllib = require('url');
 
-var Crawler = (function () {
+(function () {
   'use strict';
 
-  var _props = {
-    crawlExternal: true,
-    events: {
-      error: [],
-      finish: [],
-      pageCrawled: [],
-      redirect: []
-    },
-    excludes: [],
-    mandatoryExcludes: [
-      /^(file|ftp|javascript|mailto|tel|whatsapp):/g
-    ],
-    mainUrl: null,
-    retries: 1,
-    retriedUrls: {},
-    urlsCrawled: [],
-    urlsQueued: []
-  };
-
-  return new class {
+  class Crawler {
 
     /*
     | PUBLIC METHODS
     */
 
-    constructor() {
+    constructor (userSettings) {
       /*eslint no-mixed-spaces-and-tabs:0 */
-      'use strict';
+      var async = require('async');
+      var tough = require('tough-cookie');
 
-    	// if (typeof params !== 'object') {
-    	// 	params = {};
-    	// }
+      // Update props with any settings from instantiation
+      var _props = {
+        crawlExternal: true,
+        events: {
+          error: [],
+          finish: [],
+          pageCrawled: [],
+          redirect: []
+        },
+        excludes: [],
+        cookie: new tough.CookieJar(),
+        mandatoryExcludes: [
+          /^(file|ftp|javascript|mailto|tel|whatsapp):/g
+        ],
+        mainUrl: null,
+        retries: 1,
+        retriedUrls: {},
+        urlsCrawled: [],
+        workers: 1
+      };
+
+      Object.assign(_props, userSettings || {});
+
       //
     	// var crawler = this;
       //
     	// // Private properties
     	// this._crawlExternal = params.crawlExternal || false;
-    	// this._killed = false;
-    	// this._urlsCrawled = [];
-    	// this.workers = params.workers || 4;
-    	// this._queue = async.queue(function (page, callback) {
-    	// 	crawler._crawlPage(page, callback);
-    	// }, this.workers);
       //
     	// // Public properties
       //
@@ -59,37 +54,32 @@ var Crawler = (function () {
     	// }
       //
     	// this.auth = params.auth || false;
-    	// this.excludePatterns = params.excludePatterns || [];
-    	// this.onDrain = params.onDrain || function () {};
-    	// this.onError = params.onError || function () {};
-    	// this.onPageCrawl = params.onPageCrawl || function () {};
-    	// this.onRedirect = params.onRedirect || function () {};
-    	// this.retries = params.retries || 0;
     	// this.strictSSL = params.strictSSL || false;
     	// this.timeout = params.timeout || 60000;
       //
-    	// this._queue.drain = function () {
-    	// 	crawler.onDrain();
-    	// };
       this._get = function (name) {
         return _props[name];
       };
       this._set = function (name, value) {
         _props[name] = value;
       };
+
+      this._set('asyncQueue', async.queue(this._crawlNextPage.bind(this), this._get('workers')));
+      this._get('asyncQueue').drain = this._finish.bind(this);
     }
 
     get (name) {
       switch (name) {
         case 'urlsQueued':
-          return this._get('urlsQueued').map((queueItem) => (queueItem.url));
+          return this._get('asyncQueue').tasks.map((queueItem) => (queueItem.data.url));
         default:
           return this._get(name);
       }
     }
 
     kill () {
-      this._set('urlsQueued', []);
+      this._get('asyncQueue').kill();
+      this._finish();
     }
 
     markCrawled (url) {
@@ -115,7 +105,6 @@ var Crawler = (function () {
       var queueItem = {};
       var urlData = urllib.parse(url);
       var normalizedUrl = urlData.href.replace(/#.*/gi, '');
-      var urlsQueued = this._get('urlsQueued'); // this object will update without "set"
 
       // Set whether URL is external or not
       queueItem.isExternal = this._isExternal(urlData);
@@ -153,7 +142,7 @@ var Crawler = (function () {
       }
 
       // Add to queue
-      urlsQueued.push(queueItem);
+      this._get('asyncQueue').push(queueItem);
 
       return true;
     }
@@ -172,27 +161,28 @@ var Crawler = (function () {
       // Set main URL if one is not already set
       this.set('mainUrl', url);
       this.queue(url);
-      this._crawlNextPage();
     }
 
     /*
     | PRIVATE METHODS
     */
 
-    _crawlNextPage () {
+    _crawlNextPage (task, finish) {
+      var pathlib = require('path');
       var request = require(pathlib.join(__dirname, 'request'));
-      var queueItem = this._get('urlsQueued').shift();
-
-      // If there are no more pages, call the "finish" event
-      if (queueItem === undefined) {
-        return this._get('events').finish.forEach((callback) => callback());
-      }
+      var queueItem = task;
 
       // Get page data
       request({
         url: queueItem.url,
-        isExternal: queueItem.isExternal
-      }, this._onResponse.bind(this, queueItem));
+        auth: this._get('auth'),
+        isExternal: queueItem.isExternal,
+        jar: this._get('cookie')
+      }, this._onResponse.bind(this, queueItem, finish));
+    }
+
+    _finish () {
+      this._get('events').finish.forEach((callback) => callback());
     }
 
     _isExternal (urlData) {
@@ -202,10 +192,10 @@ var Crawler = (function () {
 
     _isQueued (url) {
       var i;
-      var urlsQueued = this._get('urlsQueued');
+      var urlsQueued = this.get('urlsQueued');
 
       for (i in urlsQueued) {
-        if (urlsQueued[i].url === url) {
+        if (urlsQueued[i] === url) {
           return true;
         }
       }
@@ -213,7 +203,7 @@ var Crawler = (function () {
       return false;
     }
 
-    _onResponse (queueItem, error, response, body) {
+    _onResponse (queueItem, finish, error, response, body) {
       'use strict';
 
       var maxRetries = this._get('retries');
@@ -241,7 +231,7 @@ var Crawler = (function () {
 
       // If this URL has already been processed, just continue
       if (urlsCrawled.indexOf(response.url) > -1) {
-        return this._crawlNextPage();
+        return finish();
       }
 
       // Handle errors
@@ -269,8 +259,8 @@ var Crawler = (function () {
            }
            if (retriedUrls[url] < maxRetries) {
              retriedUrls[url]++; // increase number of retries for page
-             this._get('urlsQueued').unshift(queueItem); // add URL to the front of the queue
-             return this._crawlNextPage();
+             this._get('asyncQueue').unshift(queueItem); // add URL to the front of the queue
+             return finish();
            }
         }
 
@@ -278,7 +268,7 @@ var Crawler = (function () {
         urlsCrawled.push(response.url);
 
         this._get('events').error.forEach((callback) => callback(error, response, body));
-        return this._crawlNextPage();
+        return finish();
       }
 
       // Add final page URL to list of pages crawled
@@ -291,7 +281,7 @@ var Crawler = (function () {
       this._queueLinks(response.url, body);
 
       // Process next page
-      this._crawlNextPage();
+      finish();
     }
 
     _processRedirect (url, response) {
@@ -331,13 +321,13 @@ var Crawler = (function () {
       var $ = cheerio.load(html);
 
       $('a').each(function () {
-  			var href = this.attr('href');
+  			var href = $(this).attr('href');
   			if (href) {
   				crawler.queue(urllib.resolve(crawler._get('mainUrl'), href), url);
   			}
   		});
     }
   }
-});
 
-exports.Crawler = Crawler;
+  exports.Crawler = Crawler;
+}());
