@@ -266,11 +266,11 @@ var urllib = require('url');
       // Add final page URL to list of pages crawled
       urlsCrawled.push(response.url);
 
+      // Parse all links on the page and store them in the response
+      response.links = this._queueLinks(response.url, body);
+
       // Run all callbacks for the pageCrawled event
       this._get('events').pageCrawled.forEach((callback) => callback(response, body));
-
-      // Parse all links on the page
-      this._queueLinks(response.url, body);
 
       // Process next page
       finish();
@@ -296,6 +296,9 @@ var urllib = require('url');
         return false;
       }
 
+      // Store redirect in response
+      response.redirect = url;
+
       // Add URL to list of URLs crawled
       if (urlsCrawled.indexOf(url) < 0) {
         urlsCrawled.push(url);
@@ -311,13 +314,22 @@ var urllib = require('url');
       var cheerio = require('cheerio');
       var crawler = this;
       var $ = cheerio.load(html);
+      var pageLinks = [];
 
       $('a').each(function () {
-  			var href = $(this).attr('href');
+        var href = $(this).attr('href');
+        var fullHref;
+
   			if (href) {
-  				crawler.queue(urllib.resolve(crawler._get('mainUrl'), href), url);
+          fullHref = urllib.resolve(crawler._get('mainUrl'), href);
+          if (pageLinks.indexOf(fullHref) < 0) {
+            pageLinks.push(fullHref);
+            crawler.queue(fullHref, url);
+          }
   			}
   		});
+
+      return pageLinks;
     }
   }
 

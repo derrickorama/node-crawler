@@ -100,4 +100,15 @@ describe('redirect event', function () {
     });
   });
 
+  it('includes the redirect in the response', function (done) {
+    crawler.on('pageCrawled', function (response) {
+      if (response.url === 'http://localhost:8888/page-2') {
+        response.redirect.should.equal('http://localhost:8888/page-1');
+        done();
+      }
+    });
+    crawler.start('http://localhost:8888');
+    crawler.queue('http://localhost:8888/page-1');
+  });
+
 });

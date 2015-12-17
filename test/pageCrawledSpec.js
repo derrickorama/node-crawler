@@ -120,4 +120,25 @@ describe('pageCrawled event', function () {
     });
   });
 
+  it('includes a list of all unique links on the page', function (done) {
+    server.onUrl('/', function (req, res) {
+      res.writeHead(200, {
+        'Content-Type': 'text/html'
+      });
+      return '<a href="/page-1">Page 1</a><a href="/page-1">Page 1</a><a href="http://www.domain.com">External link</a><a href="javascript:;">JS link</a>';
+    });
+    crawler.set('crawlExternal', false);
+    crawler.start('http://localhost:8888');
+    crawler.on('pageCrawled', function (response) {
+      if (response.url === 'http://localhost:8888/') {
+        response.links.should.eql([
+          'http://localhost:8888/page-1',
+          'http://www.domain.com/',
+          'javascript:;'
+        ]);
+        done();
+      }
+    });
+  });
+
 });
