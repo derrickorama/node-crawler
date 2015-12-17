@@ -57,8 +57,8 @@ describe('redirect event', function () {
   });
 
   it('calls all "redirect" event handlers when a redirect occurs', function (done) {
-    crawler.on('redirect', function (redirecteUrl, response) {
-      redirecteUrl.should.equal('http://localhost:8888/page-1');
+    crawler.on('redirect', function (response) {
+      response.redirect.should.equal('http://localhost:8888/page-1');
       response.url.should.equal('http://localhost:8888/page-2');
       done();
     });

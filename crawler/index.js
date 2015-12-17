@@ -305,7 +305,7 @@ var urllib = require('url');
       }
 
       // Execute redirect event handlers
-      this._get('events').redirect.forEach((callback) => callback(url, response));
+      this._get('events').redirect.forEach((callback) => callback(response));
 
       return true; // return tru to say this is a redirect
     }
