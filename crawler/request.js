@@ -8,7 +8,6 @@ module.exports = function (params, callback) {
 
   var Buffer = require('buffer').Buffer;
 
-  var crawler = this;
   var body = new Buffer('');
   var called = false;
   var error = null;
@@ -157,9 +156,15 @@ module.exports = function (params, callback) {
           if (deflateBody === true) {
             zlib.unzip(body, function(err, buffer) {
               if (err) {
-                winston.error(err);
+                winston.error(err.stack);
               }
-              body = buffer.toString();
+              try {
+                body = buffer.toString();
+              } catch (e) {
+                winston.error('Could not get string from buffer:', buffer);
+                winston.error('on:', url);
+                body = '';
+              }
               finish();
             });
           } else {

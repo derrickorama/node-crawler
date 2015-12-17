@@ -5,14 +5,20 @@ var Crawler = (function () {
   'use strict';
 
   var _props = {
-    crawlExternal: false,
+    crawlExternal: true,
     events: {
+      error: [],
       finish: [],
       pageCrawled: [],
       redirect: []
     },
     excludes: [],
+    mandatoryExcludes: [
+      /^(file|ftp|javascript|mailto|tel|whatsapp):/g
+    ],
     mainUrl: null,
+    retries: 1,
+    retriedUrls: {},
     urlsCrawled: [],
     urlsQueued: []
   };
@@ -73,7 +79,20 @@ var Crawler = (function () {
       };
     }
 
-    markCrawled(url) {
+    get (name) {
+      switch (name) {
+        case 'urlsQueued':
+          return this._get('urlsQueued').map((queueItem) => (queueItem.url));
+        default:
+          return this._get(name);
+      }
+    }
+
+    kill () {
+      this._set('urlsQueued', []);
+    }
+
+    markCrawled (url) {
       var urlsCrawled = this._get('urlsCrawled');
 
       if (urlsCrawled.indexOf(url) === -1) {
@@ -86,23 +105,28 @@ var Crawler = (function () {
       return urlData.href.replace(/#.*/gi, '');
     }
 
-    on(event, callback) {
+    on (event, callback) {
       this._get('events')[event].push(callback);
     }
 
-    queue (url) {
+    queue (url, referrer) {
+      var excludes;
       var isExcludedUrl;
+      var queueItem = {};
       var urlData = urllib.parse(url);
       var normalizedUrl = urlData.href.replace(/#.*/gi, '');
       var urlsQueued = this._get('urlsQueued'); // this object will update without "set"
 
+      // Set whether URL is external or not
+      queueItem.isExternal = this._isExternal(urlData);
+
       // Do not add external URLs to the queue if they shouldn't be crawled
-      if (this._isExternal(urlData) === true && this._get('crawlExternal') === false) {
+      if (queueItem.isExternal === true && this._get('crawlExternal') === false) {
         return false;
       }
 
       // Do not add URLs that are already in the queue
-      if (urlsQueued.indexOf(normalizedUrl) > -1) {
+      if (this._isQueued(normalizedUrl) === true) {
         return false;
       }
 
@@ -111,14 +135,25 @@ var Crawler = (function () {
         return false;
       }
 
+      // Combine user-set excludes with mandatory excludes
+      excludes = this._get('excludes').concat(this._get('mandatoryExcludes'));
+
       // Do not add URLs that match any exclude patterns
-      isExcludedUrl = this._get('excludes').reduce((isExclude, exclude) => (exclude.test(normalizedUrl) || isExclude), false);
-      if (isExcludedUrl) {
+      isExcludedUrl = excludes.reduce((isExclude, exclude) => (normalizedUrl.search(exclude) > -1 || isExclude), false);
+      if (isExcludedUrl || urlData.host === '') {
         return false;
       }
 
+      // Set queue item URL
+      queueItem.url = normalizedUrl;
+
+      // Add referrer to queue item
+      if (referrer) {
+        queueItem.referrer = referrer;
+      }
+
       // Add to queue
-      urlsQueued.push(normalizedUrl);
+      urlsQueued.push(queueItem);
 
       return true;
     }
@@ -146,17 +181,18 @@ var Crawler = (function () {
 
     _crawlNextPage () {
       var request = require(pathlib.join(__dirname, 'request'));
-      var nextPage = this._get('urlsQueued').shift();
+      var queueItem = this._get('urlsQueued').shift();
 
       // If there are no more pages, call the "finish" event
-      if (nextPage === undefined) {
+      if (queueItem === undefined) {
         return this._get('events').finish.forEach((callback) => callback());
       }
 
       // Get page data
       request({
-        url: nextPage
-      }, this._onResponse.bind(this, nextPage));
+        url: queueItem.url,
+        isExternal: queueItem.isExternal
+      }, this._onResponse.bind(this, queueItem));
     }
 
     _isExternal (urlData) {
@@ -164,97 +200,98 @@ var Crawler = (function () {
       return urlData.protocol !== mainUrl.protocol || urlData.host !== mainUrl.host;
     }
 
-    _onResponse (url, error, response, body) {
+    _isQueued (url) {
+      var i;
+      var urlsQueued = this._get('urlsQueued');
+
+      for (i in urlsQueued) {
+        if (urlsQueued[i].url === url) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    _onResponse (queueItem, error, response, body) {
       'use strict';
 
+      var maxRetries = this._get('retries');
+      var retriedUrls = this._get('retriedUrls');
+      var url = queueItem.url;
       var urlsCrawled = this._get('urlsCrawled');
 
       // Make sure response is an object
       if (!response || typeof response !== 'object') {
-      	response = {};
+      	response = {
+          url: queueItem.url
+        };
       }
+
+      // Save referrer to response if present
+      if (queueItem.referrer) {
+        response.referrer = queueItem.referrer;
+      }
+
+      // Save isExternal to response
+      response.isExternal = queueItem.isExternal;
 
       // Run checks and procedures for redirects that may have occurred
       this._processRedirect(url, response);
 
-      // Add final page URL to list of pages crawled
-      if (urlsCrawled.indexOf(response.url) < 0) {
-        urlsCrawled.push(response.url);
+      // If this URL has already been processed, just continue
+      if (urlsCrawled.indexOf(response.url) > -1) {
+        return this._crawlNextPage();
       }
 
+      // Handle errors
+      if (error || response.statusCode !== 200) {
+
+        // Ignore error if it's due to a bad content-length and we're checking an external link
+        // TODO: figure out how to write a test for this
+        if (
+        	error !== null &&
+        	error.code === 'HPE_INVALID_CONSTANT' &&
+        	response.statusCode === 200 &&
+          // check both requested URL and final URL
+        	(
+            this._isExternal(urllib.parse(response.url)) === true ||
+            this._isExternal(urllib.parse(url)) === true
+          )
+        ) {
+        	error = null;
+        }
+
+        // Retry URLs if retries is set
+        if (maxRetries > 0) {
+           if (retriedUrls.hasOwnProperty(url) === false) {
+             retriedUrls[url] = 0;
+           }
+           if (retriedUrls[url] < maxRetries) {
+             retriedUrls[url]++; // increase number of retries for page
+             this._get('urlsQueued').unshift(queueItem); // add URL to the front of the queue
+             return this._crawlNextPage();
+           }
+        }
+
+        // Add url or final URL to list of pages crawled
+        urlsCrawled.push(response.url);
+
+        this._get('events').error.forEach((callback) => callback(error, response, body));
+        return this._crawlNextPage();
+      }
+
+      // Add final page URL to list of pages crawled
+      urlsCrawled.push(response.url);
+
       // Run all callbacks for the pageCrawled event
-      this._get('events').pageCrawled.forEach((callback) => callback(error, response, body));
+      this._get('events').pageCrawled.forEach((callback) => callback(response, body));
+
+      // Parse all links on the page
+      this._queueLinks(response.url, body);
 
       // Process next page
       this._crawlNextPage();
-
-      // // If the crawler was killed before this request was ready, finish the process
-      // if (this._killed === true) {
-      // 	finishCallback();
-      // 	return false;
-      // }
-      //
-      // var finalURL;
-      //
-      // // Make sure response is an object
-      // if (!response || typeof response !== 'object') {
-      // 	response = {};
-      // }
-      //
-      // // Store the final URL (in case there was a redirect)
-      // if (response.url) {
-      // 	finalURL = response.url;
-      // }
-      //
-      // // Check if page was a redirect and save the redirect data
-      // if (finalURL !== undefined && finalURL !== pageInfo.page.url) {
-      //
-      // 	// Check if redirect went to an external URL
-      // 	if (pageInfo.page.isExternal === false && this.isExternal(pageInfo.page.url, finalURL) === true) {
-      // 		pageInfo.page.isExternal = true;
-      // 	}
-      //
-      // 	// Process redirect and get new, detached (cloned) object
-      // 	pageInfo = this._processRedirect(pageInfo, finalURL, response);
-      //
-      // 	// If pageInfo is null, skip it. It's already been processed.
-      // 	if (pageInfo === null) {
-      // 		finishCallback();
-      // 		return false;
-      // 	}
-      // }
-      //
-      // // Ignore error if it's due to a bad content-length and we're checking an external link
-      // if (
-      // 	error !== null &&
-      // 	error.code === 'HPE_INVALID_CONSTANT' &&
-      // 	_.pluck(response.headers, 'content-length').length > 0 &&
-      // 	response.statusCode === 200 &&
-      // 	pageInfo.page.isExternal === true
-      // ) {
-      // 	error = null;
-      // }
-      //
-      // if (error === null && response.statusCode === 200) {
-      // 	this._responseSuccess(pageInfo, response, body, finishCallback);
-      // } else {
-      // 	// Try to load the page again if more than 0 retries are specified
-      // 	if (this.retries > 0) {
-      // 		if (pageInfo._retries === undefined) {
-      // 			pageInfo._retries = 0;
-      // 		}
-      //
-      // 		// If retries haven't reached the maximum retries, retry the request
-      // 		if (pageInfo._retries < this.retries) {
-      // 			pageInfo._retries++;
-      // 			this._crawlPage(pageInfo, finishCallback);
-      // 			return false;
-      // 		}
-      // 	}
-      //
-      // 	// This page is bad, send error
-      // 	this._responseError(pageInfo, response, error, finishCallback);
-      // }
     }
 
     _processRedirect (url, response) {
@@ -285,32 +322,20 @@ var Crawler = (function () {
       // Execute redirect event handlers
       this._get('events').redirect.forEach((callback) => callback(url, response));
 
-      // /*
-      // | Note: this section was particularly picky. The sequence of events is important.
-      // */
-      // var cleanFinalURL = urllib.parse(response.url).href;
-      // var wasAdded = false;
-      //
-      // // Determine if page URL was queued
-      // if (this._wasCrawled(cleanFinalURL) === false) {
-      // } else {
-      // 	wasAdded = true;
-      // }
-      //
-      // // Handle redirected page
-      // this.onRedirect(_.clone(pageInfo.page), response, finalURL);
-      //
-      // // Update page info
-      // pageInfo.page.redirects.push(pageInfo.page.url); // Save redirect
-      // pageInfo.page.url = cleanFinalURL;
-      //
-      // // If page was already added/queued, skip the processing
-      // if (wasAdded === true) {
-      // 	return null;
-      // }
-      //
-      // // Update pageInfo so that it's processing the page it was redirected to and not the redirect
-      // return pageInfo;
+      return true; // return tru to say this is a redirect
+    }
+
+    _queueLinks (url, html) {
+      var cheerio = require('cheerio');
+      var crawler = this;
+      var $ = cheerio.load(html);
+
+      $('a').each(function () {
+  			var href = this.attr('href');
+  			if (href) {
+  				crawler.queue(urllib.resolve(crawler._get('mainUrl'), href), url);
+  			}
+  		});
     }
   }
 });

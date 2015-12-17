@@ -1,4 +1,4 @@
-exports.Server = function () {
+exports.Server = function (port) {
   var http = require('http');
   var _body = 'OK';
   var _headers = {
@@ -20,7 +20,7 @@ exports.Server = function () {
     }
 
     res.end(_body);
-  }).listen(8888);
+  }).listen(port || 8888);
 
   return {
     isClosed: function () {
