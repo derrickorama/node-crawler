@@ -69,4 +69,23 @@ describe('authentication support', function () {
     });
   });
 
+  it('does not try to re-authenticate after a failure', function (done) {
+    var crawler = new Crawler({
+      auth: {
+        username: 'user',
+        password: 'pass'
+      }
+    });
+    crawler.start('http://localhost:8888/');
+    server.onUrl('/', function (req, res) {
+      // Request will always fail
+      res.writeHead(401);
+      return 'Nope.';
+    });
+    crawler.on('error', function (error, response) {
+      response.statusCode.should.equal(401);
+      done();
+    });
+  });
+
 });

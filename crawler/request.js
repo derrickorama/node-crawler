@@ -113,7 +113,8 @@ module.exports = function (params, callback) {
           params.isExternal !== true &&
           response.statusCode &&
           response.statusCode === 401 &&
-          params.auth
+          params.auth &&
+          useAuth !== true // don't keep requesting this page if we already tried to authenticate
         ) {
           // Use credentials
           req.abort();
