@@ -66,6 +66,7 @@ var urllib = require('url');
     }
 
     kill () {
+      this.killed = true;
       this._get('asyncQueue').kill();
       this._finish();
     }
@@ -254,8 +255,13 @@ var urllib = require('url');
       // Add final page URL to list of pages crawled
       urlsCrawled.push(response.url);
 
-      // Parse all links on the page and store them in the response
-      response.links = this._queueLinks(response.url, body);
+
+
+      // Check if crawler was killed before the response was recieved
+      if (this.killed !== true) {
+        // Parse all links on the page and store them in the response
+        response.links = this._queueLinks(response.url, body);
+      }
 
       // Run all callbacks for the pageCrawled event
       this._get('events').pageCrawled.forEach((callback) => callback(response, body));
