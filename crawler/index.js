@@ -37,23 +37,6 @@ var urllib = require('url');
 
       Object.assign(_props, userSettings || {});
 
-      //
-    	// var crawler = this;
-      //
-    	// // Private properties
-    	// this._crawlExternal = params.crawlExternal || false;
-      //
-    	// // Public properties
-      //
-    	// // Set cookie jar
-    	// if (params.jar === false) {
-    	// 	this.jar = false;
-    	// } else {
-    	// 	// Create new jar if "true" or use jar provided
-    	// 	this.jar = typeof params.jar === 'object' ? params.jar : new tough.CookieJar();
-    	// }
-      //
-    	// this.auth = params.auth || false;
     	// this.strictSSL = params.strictSSL || false;
     	// this.timeout = params.timeout || 60000;
       //
@@ -63,6 +46,11 @@ var urllib = require('url');
       this._set = function (name, value) {
         _props[name] = value;
       };
+
+      // Convert strings in excludes to RegExps
+      _props.excludes = _props.excludes.map((exclude) => (
+        exclude instanceof RegExp ? exclude : new RegExp(exclude, 'g')
+      ));
 
       this._set('asyncQueue', async.queue(this._crawlNextPage.bind(this), this._get('workers')));
       this._get('asyncQueue').drain = this._finish.bind(this);
