@@ -25,9 +25,11 @@ exports.Server = function (port) {
         res.writeHead(_statusCode, _headers);
       }
     }
-    
+
     setTimeout(function () {
-      res.end(_body);
+      if (_body !== false) {
+        res.end(_body);
+      }
     }, _delays[req.url] || 0);
   }).listen(port || 8888);
 

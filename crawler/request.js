@@ -4,10 +4,11 @@ module.exports = function (params, callback) {
 
   var requestParams = {
     url: params.url,
+    gzip: true, // accept gzip, always
     headers: params.headers,
     jar: params.cookie !== undefined ? params.cookie : true,
     maxRedirects: params.maxRedirects,
-    strictSSL: false,
+    strictSSL: false, // we aren't strict here, just trying to scrape
     timeout: params.timeout
   };
 
@@ -19,6 +20,7 @@ module.exports = function (params, callback) {
 
   var req = request.get(requestParams, finish)
     .on('response', function (response) {
+
       // Abort (preventing download) for the following pages
       if (
         // External pages (we don't need the body for anything)
@@ -26,7 +28,7 @@ module.exports = function (params, callback) {
         // Non-text documents
         (response.headers && response.headers['content-type'] && response.headers['content-type'].indexOf('text/') < 0) ||
         // Paths that match the doNotDownload list
-        params.doNotDownload.reduce((exclude) => (params.url.search(exclude) > -1), false)
+        params.doNotDownload.reduce((hasExclude, exclude) => (params.url.search(exclude) > -1 || hasExclude), false)
       ) {
         req.abort();
         abortedDownload = response;

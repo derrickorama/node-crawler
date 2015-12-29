@@ -1,4 +1,6 @@
+var fs = require('fs');
 var pathlib = require('path');
+var zlib = require('zlib');
 var request = require('request');
 var sinon = require('sinon');
 var Crawler = require(pathlib.join(__dirname, '..', 'crawler')).Crawler;
@@ -55,12 +57,30 @@ describe('request headers', function () {
       } else {
         body.should.equal('I have content!');
       }
+    });
+    crawler.on('finish', function () {
       done();
     });
     crawler.start('http://localhost:8888');
     crawler.queue('http://localhost:8888/file.jpg');
     crawler.queue('http://localhost:8888/file.gif');
     crawler.queue('http://localhost:8888/file.png');
+  });
+
+  it('can decode gzipped data', function (done) {
+    server.onUrl('/', function (req, res) {
+      var raw = fs.createReadStream(pathlib.join(__dirname, 'mocks', 'some-text.txt'));
+      res.writeHead(200, { 'content-encoding': 'gzip', 'content-type': 'text/html' });
+      raw.pipe(zlib.createGzip()).pipe(res);
+      return false;
+    });
+
+    var crawler = new Crawler();
+    crawler.on('pageCrawled', function (response, body) {
+      body.should.equal('some text');
+      done();
+    });
+    crawler.start('http://localhost:8888');
   });
 
 });
