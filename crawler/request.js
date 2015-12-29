@@ -11,8 +11,10 @@ module.exports = function (params, callback) {
     timeout: params.timeout
   };
 
-  if (params.isExternal !== true) {
-    requestParams.auth = params.auth;
+  if (params.isExternal !== true && params.auth) {
+    requestParams.auth = Object.assign({
+      sendImmediately: false // this forces request to wait for the 401 status code before using authentication
+    }, params.auth);
   }
 
   var req = request.get(requestParams, finish)
