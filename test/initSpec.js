@@ -56,4 +56,13 @@ describe('initialization', function () {
     ]);
   });
 
+  it('converts strings in "doNotDownload" property to regular expressions', function () {
+    crawler = new Crawler({
+      doNotDownload: ['^\\/some\\/path\\.escaped$']
+    });
+    crawler.get('doNotDownload').should.eql([
+      /^\/some\/path\.escaped$/g
+    ]);
+  });
+
 });

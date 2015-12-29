@@ -48,10 +48,9 @@ var urllib = require('url');
         _props[name] = value;
       };
 
-      // Convert strings in excludes to RegExps
-      _props.excludes = _props.excludes.map((exclude) => (
-        exclude instanceof RegExp ? exclude : new RegExp(exclude, 'g')
-      ));
+      // Use public "set" method instead of setting directly (normalizes settings)
+      this.set('excludes', _props.excludes);
+      this.set('doNotDownload', _props.doNotDownload);
 
       this._set('asyncQueue', async.queue(this._crawlNextPage.bind(this), this._get('workers')));
       this._get('asyncQueue').drain = this._finish.bind(this);
@@ -131,6 +130,13 @@ var urllib = require('url');
 
     set (name, value) {
       switch (name) {
+        case 'excludes':
+        case 'doNotDownload':
+          // Convert strings in excludes to RegExps
+          this._set(name, value.map((item) => (
+            item instanceof RegExp ? item : new RegExp(item, 'g')
+          )));
+          break;
         case 'mainUrl':
           this._set('mainUrl', urllib.parse(this.normalizeUrl(value)));
           break;
