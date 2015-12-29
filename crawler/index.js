@@ -12,11 +12,11 @@ var urllib = require('url');
     constructor (userSettings) {
       /*eslint no-mixed-spaces-and-tabs:0 */
       var async = require('async');
-      var tough = require('tough-cookie');
 
       // Update props with any settings from instantiation
       var _props = {
         crawlExternal: true,
+        doNotDownload: [],
         events: {
           error: [],
           finish: [],
@@ -24,13 +24,14 @@ var urllib = require('url');
           redirect: []
         },
         excludes: [],
-        cookie: new tough.CookieJar(),
         mandatoryExcludes: [
           /^(file|ftp|javascript|mailto|tel|whatsapp):/g
         ],
         mainUrl: null,
+        maxRedirects: 7,
         retries: 1,
         retriedUrls: {},
+        timeout: 30000,
         urlsCrawled: [],
         workers: 1
       };
@@ -148,17 +149,20 @@ var urllib = require('url');
     | PRIVATE METHODS
     */
 
-    _crawlNextPage (task, finish) {
+    _crawlNextPage (queueItem, finish) {
       var pathlib = require('path');
       var request = require(pathlib.join(__dirname, 'request'));
-      var queueItem = task;
 
       // Get page data
       request({
         url: queueItem.url,
         auth: this._get('auth'),
+        cookie: this._get('cookie'),
+        doNotDownload: this._get('doNotDownload'),
+        headers: this._get('headers'),
         isExternal: queueItem.isExternal,
-        jar: this._get('cookie')
+        maxRedirects: this._get('maxRedirects'),
+        timeout: this._get('timeout')
       }, this._onResponse.bind(this, queueItem, finish));
     }
 
@@ -234,7 +238,10 @@ var urllib = require('url');
         }
 
         // Retry URLs if retries is set
-        if (maxRetries > 0) {
+        if (
+          maxRetries > 0 &&
+          (!error || error.message.indexOf('Exceeded maxRedirects.') !== 0) // Do not retry redirects (that's handled in the request)
+        ) {
            if (retriedUrls.hasOwnProperty(url) === false) {
              retriedUrls[url] = 0;
            }

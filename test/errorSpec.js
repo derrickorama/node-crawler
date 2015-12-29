@@ -23,8 +23,6 @@ describe('error handling', function () {
     server.stop(done);
   });
 
-
-
   it('calls the error event handlers when errors occur', function (done) {
     server.stop();
     crawler.start('http://localhost:8888');

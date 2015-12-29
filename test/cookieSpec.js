@@ -1,5 +1,6 @@
 var pathlib = require('path');
 var http = require('http');
+var request = require('request');
 var tough = require('tough-cookie');
 var Crawler = require(pathlib.join(__dirname, '..', 'crawler')).Crawler;
 var mockServer = require(pathlib.join(__dirname, 'mocks', 'server')).Server;
@@ -40,12 +41,11 @@ describe('cookie support', function () {
 
   it('supports cookies by default', function (done) {
     var crawler = new Crawler();
-    (crawler._get('cookie') instanceof tough.CookieJar).should.equal(true); // should.be.true doesn't work here
     crawler.start('http://localhost:8888');
     crawler.queue('http://localhost:8888/make-cookie');
     crawler.on('pageCrawled', function (response, body) {
       if (response.url === 'http://localhost:8888/show-cookie') {
-        body.should.equal('cookie=test; Path=/');
+        body.should.equal('cookie=test');
         done();
       }
     });
@@ -66,20 +66,21 @@ describe('cookie support', function () {
     });
   });
 
-
-  it('ignores cookie parsing errors', function () {
+  it('ignores cookie parsing errors', function (done) {
     // This will throw an exception and kill the process if it's not handled
     var crawler = new Crawler();
     crawler.start('http://localhost:8888');
     cookie = 'AMA Publishing GroupMachineID=635368805209600916';
     crawler.queue('http://localhost:8888/make-cookie');
+    crawler.on('finish', function () {
+      done();
+    });
   });
 
-
   it('allows you to provide an existing cookie jar', function (done) {
-    var cookieJar = new tough.CookieJar();
+    var cookieJar = new request.jar();
 
-    cookieJar.setCookieSync('blah=yes', 'http://localhost:8888', {
+    cookieJar.setCookie('blah=yes', 'http://localhost:8888', {
       ignoreError: true
     });
 
@@ -91,7 +92,7 @@ describe('cookie support', function () {
     crawler.queue('http://localhost:8888/show-cookie');
     crawler.on('pageCrawled', function (response, body) {
       if (response.url === 'http://localhost:8888/show-cookie') {
-        body.should.equal('blah=yes; Path=/');
+        body.should.equal('blah=yes');
         done();
       }
     });

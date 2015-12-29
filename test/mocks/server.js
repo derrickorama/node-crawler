@@ -1,6 +1,7 @@
 exports.Server = function (port) {
   var http = require('http');
   var _body = 'OK';
+  var _delays = {};
   var _headers = {
     'Content-Type': 'text/plain'
   };
@@ -24,13 +25,18 @@ exports.Server = function (port) {
         res.writeHead(_statusCode, _headers);
       }
     }
-
-    res.end(_body);
+    
+    setTimeout(function () {
+      res.end(_body);
+    }, _delays[req.url] || 0);
   }).listen(port || 8888);
 
   return {
     isClosed: function () {
       return _isClosed;
+    },
+    delay: function (url, delay) {
+      _delays[url] = delay;
     },
     onUrl: function (url, callback) {
       if (_requestHandlers.hasOwnProperty(url) !== true) {

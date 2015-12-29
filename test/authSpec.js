@@ -1,6 +1,4 @@
 var pathlib = require('path');
-var http = require('http');
-var tough = require('tough-cookie');
 var Crawler = require(pathlib.join(__dirname, '..', 'crawler')).Crawler;
 var mockServer = require(pathlib.join(__dirname, 'mocks', 'server')).Server;
 

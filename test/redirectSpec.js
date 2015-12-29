@@ -1,3 +1,4 @@
+var http = require('http');
 var pathlib = require('path');
 var sinon = require('sinon');
 var Crawler = require(pathlib.join(__dirname, '..', 'crawler')).Crawler;
@@ -109,6 +110,88 @@ describe('redirect event', function () {
     });
     crawler.start('http://localhost:8888');
     crawler.queue('http://localhost:8888/page-1');
+  });
+
+  it('stops following redirects after 7 redirects occur', function (done) {
+    server.onUrl('/page-3', function (req, res) {
+      res.writeHead(302, {
+        'Location': '/page-3'
+      });
+      return '';
+    });
+
+    var httpRequest = http.request;
+
+    sinon.stub(http, 'request', httpRequest);
+
+    crawler.on('pageCrawled', function (response) {
+      response.url.should.not.equal('http://localhost:8888/page-3');
+    });
+    crawler.on('finish', function () {
+      var page3Calls = http.request.args.filter(function (args) {
+        return args[0].href === 'http://localhost:8888/page-3';
+      });
+      page3Calls.length.should.equal(8);
+      http.request.restore();
+      done();
+    });
+
+    crawler.start('http://localhost:8888');
+    crawler.queue('http://localhost:8888/page-3');
+  });
+
+  it('allows you to set the number of max redirects', function (done) {
+    server.onUrl('/page-3', function (req, res) {
+      res.writeHead(302, {
+        'Location': '/page-3'
+      });
+      return '';
+    });
+
+    var httpRequest = http.request;
+
+    sinon.stub(http, 'request', httpRequest);
+
+    crawler = new Crawler({
+      maxRedirects: 0
+    });
+
+    crawler.on('pageCrawled', function (response) {
+      response.url.should.not.equal('http://localhost:8888/page-3');
+    });
+    crawler.on('finish', function () {
+      var page3Calls = http.request.args.filter(function (args) {
+        return args[0].href === 'http://localhost:8888/page-3';
+      });
+      page3Calls.length.should.equal(1);
+      http.request.restore();
+      done();
+    });
+
+    crawler.start('http://localhost:8888');
+    crawler.queue('http://localhost:8888/page-3');
+  });
+
+  it('emits the "MAX_REDIRECTS_REACHED" error when max redirects are reached', function (done) {
+    server.onUrl('/page-3', function (req, res) {
+      res.writeHead(302, {
+        'Location': '/page-3'
+      });
+      return '';
+    });
+
+    crawler = new Crawler({
+      maxRedirects: 0
+    });
+
+    crawler.on('error', function (error) {
+      error.message.should.equal('Exceeded maxRedirects. Probably stuck in a redirect loop http://localhost:8888/page-3');
+      error.code.should.equal('MAX_REDIRECTS_REACHED');
+      done();
+    });
+
+    crawler.start('http://localhost:8888');
+    crawler.queue('http://localhost:8888/page-3');
   });
 
 });
