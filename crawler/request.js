@@ -26,7 +26,7 @@ module.exports = function (params, callback) {
         // Non-text documents
         (response.headers && response.headers['content-type'] && response.headers['content-type'].indexOf('text/') < 0) ||
         // Paths that match the doNotDownload list
-        params.doNotDownload.reduce((exclude) => (params.url.search(exclude)), false)
+        params.doNotDownload.reduce((exclude) => (params.url.search(exclude) > -1), false)
       ) {
         req.abort();
         abortedDownload = response;

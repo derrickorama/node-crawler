@@ -35,6 +35,7 @@ describe('request headers', function () {
   });
 
   it('does not download based on provided paths (ignoring content type)', function (done) {
+    server.onUrl('/', requestHandler);
     server.onUrl('/file.jpg', requestHandler);
     server.onUrl('/file.gif', requestHandler);
     server.onUrl('/file.png', requestHandler);
@@ -42,17 +43,22 @@ describe('request headers', function () {
       res.writeHead(200, {
         'Content-Type': 'text/plain'
       });
-      return 'better not download me!';
+      return 'I have content!';
     }
 
     var crawler = new Crawler({
       doNotDownload: [/\.(?:jpg|gif|png)$/]
     });
     crawler.on('pageCrawled', function (response, body) {
-      body.should.equal('');
+      if (response.url.indexOf('file') > -1) {
+        body.should.equal('');
+      } else {
+        body.should.equal('I have content!');
+      }
       done();
     });
-    crawler.start('http://localhost:8888/file.jpg');
+    crawler.start('http://localhost:8888');
+    crawler.queue('http://localhost:8888/file.jpg');
     crawler.queue('http://localhost:8888/file.gif');
     crawler.queue('http://localhost:8888/file.png');
   });
