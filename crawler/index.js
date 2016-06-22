@@ -1,7 +1,15 @@
-var urllib = require('url');
+'use strict';
+
+const pathlib = require('path');
+const urllib = require('url');
+const async = require('async');
+const cheerio = require('cheerio');
+const request = require(pathlib.join(__dirname, 'request'));
+
+const HTTP_STATUS_OK = 200;
+const NOT_AN_INDEX = -1;
 
 (function () {
-  'use strict';
 
   class Crawler {
 
@@ -9,12 +17,14 @@ var urllib = require('url');
     | PUBLIC METHODS
     */
 
-    constructor (userSettings) {
+    constructor(userSettings) {
       /*eslint no-mixed-spaces-and-tabs:0 */
-      var async = require('async');
 
       // Update props with any settings from instantiation
-      var _props = {
+      const _props = {
+        CACHE_BUST_PREFIX: '__cb__',
+        cacheBust: false,
+        cacheBustString: '',
         crawlExternal: true,
         doNotDownload: [],
         events: {
@@ -51,41 +61,40 @@ var urllib = require('url');
       // Use public "set" method instead of setting directly (normalizes settings)
       this.set('excludes', _props.excludes);
       this.set('doNotDownload', _props.doNotDownload);
+      this.set('cacheBust', _props.cacheBust);
 
       this._set('asyncQueue', async.queue(this._crawlNextPage.bind(this), this._get('workers')));
       this._get('asyncQueue').drain = this._finish.bind(this);
     }
 
-    get (name) {
+    get(name) {
       switch (name) {
-        case 'urlsQueued':
-          return this._get('asyncQueue').tasks.map((queueItem) => (queueItem.data.url));
-        default:
-          return this._get(name);
+      case 'urlsQueued':
+        return this._get('asyncQueue').tasks.map((queueItem) => queueItem.data.url);
+      default:
+        return this._get(name);
       }
     }
 
-    kill () {
+    kill() {
       this.killed = true;
       this._get('asyncQueue').kill();
       this._finish();
     }
 
-    normalizeUrl (url) {
-      var urlData = urllib.parse(url);
+    normalizeUrl(url) {
+      const urlData = urllib.parse(url);
       return urlData.href.replace(/#.*/gi, '');
     }
 
-    on (event, callback) {
+    on(event, callback) {
       this._get('events')[event].push(callback);
     }
 
-    queue (url, referrer) {
-      var excludes;
-      var isExcludedUrl;
-      var queueItem = {};
-      var urlData = urllib.parse(url);
-      var normalizedUrl = urlData.href.replace(/#.*/gi, '');
+    queue(url, referrer) {
+      const queueItem = {};
+      const urlData = urllib.parse(url);
+      const normalizedUrl = urlData.href.replace(/#.*/gi, '');
 
       // Set whether URL is external or not
       queueItem.isExternal = this._isExternal(urlData);
@@ -101,15 +110,17 @@ var urllib = require('url');
       }
 
       // Do not add URLs that have already been crawled
-      if (this._get('urlsCrawled').indexOf(normalizedUrl) > -1) {
+      if (this._get('urlsCrawled').indexOf(normalizedUrl) > NOT_AN_INDEX) {
         return false;
       }
 
       // Combine user-set excludes with mandatory excludes
-      excludes = this._get('excludes').concat(this._get('mandatoryExcludes'));
+      const excludes = this._get('excludes').concat(this._get('mandatoryExcludes'));
 
       // Do not add URLs that match any exclude patterns
-      isExcludedUrl = excludes.reduce((isExclude, exclude) => (normalizedUrl.search(exclude) > -1 || isExclude), false);
+      const isExcludedUrl = excludes.reduce(
+        (isExclude, exclude) => normalizedUrl.search(exclude) > NOT_AN_INDEX || isExclude,
+      false);
       if (isExcludedUrl || urlData.host === '') {
         return false;
       }
@@ -128,24 +139,30 @@ var urllib = require('url');
       return true;
     }
 
-    set (name, value) {
+    set(name, value) {
       switch (name) {
-        case 'excludes':
-        case 'doNotDownload':
-          // Convert strings in excludes to RegExps
-          this._set(name, value.map((item) => (
-            item instanceof RegExp ? item : new RegExp(item, 'g')
-          )));
-          break;
-        case 'mainUrl':
-          this._set('mainUrl', urllib.parse(this.normalizeUrl(value)));
-          break;
-        default:
-          this._set(name, value);
+      case 'cacheBust':
+        if (value === true) {
+          this._set('cacheBustString', `${this._get('CACHE_BUST_PREFIX')}${new Date().getTime()}`);
+        }
+        this._set('cacheBust', value);
+        break;
+      case 'excludes':
+      case 'doNotDownload':
+        // Convert strings in excludes to RegExps
+        this._set(name, value.map((item) => {
+          return item instanceof RegExp ? item : new RegExp(item, 'g');
+        }));
+        break;
+      case 'mainUrl':
+        this._set('mainUrl', urllib.parse(this.normalizeUrl(value)));
+        break;
+      default:
+        this._set(name, value);
       }
     }
 
-    start (url) {
+    start(url) {
       // Set main URL if one is not already set
       this.set('mainUrl', url);
       this.queue(url);
@@ -155,13 +172,11 @@ var urllib = require('url');
     | PRIVATE METHODS
     */
 
-    _crawlNextPage (queueItem, finish) {
-      var pathlib = require('path');
-      var request = require(pathlib.join(__dirname, 'request'));
+    _crawlNextPage(queueItem, finish) {
 
       // Get page data
       request({
-        url: queueItem.url,
+        url: this._buildUrl(queueItem.url),
         auth: this._get('auth'),
         cookie: this._get('cookie'),
         doNotDownload: this._get('doNotDownload'),
@@ -172,20 +187,19 @@ var urllib = require('url');
       }, this._onResponse.bind(this, queueItem, finish));
     }
 
-    _finish () {
+    _finish() {
       this._get('events').finish.forEach((callback) => callback());
     }
 
-    _isExternal (urlData) {
-      var mainUrl = this._get('mainUrl');
+    _isExternal(urlData) {
+      const mainUrl = this._get('mainUrl');
       return urlData.protocol !== mainUrl.protocol || urlData.host !== mainUrl.host;
     }
 
-    _isQueued (url) {
-      var i;
-      var urlsQueued = this.get('urlsQueued');
+    _isQueued(url) {
+      const urlsQueued = this.get('urlsQueued');
 
-      for (i in urlsQueued) {
+      for (const i in urlsQueued) {
         if (urlsQueued[i] === url) {
           return true;
         }
@@ -194,19 +208,34 @@ var urllib = require('url');
       return false;
     }
 
-    _onResponse (queueItem, finish, error, response, body) {
-      'use strict';
+    _buildUrl(url) {
+      if (this._get('cacheBust') === true) {
+        return `${url}${this._getCacheBustQuery(url)}`;
+      }
+      return url;
+    }
 
-      var maxRetries = this._get('retries');
-      var retriedUrls = this._get('retriedUrls');
-      var url = queueItem.url;
-      var urlsCrawled = this._get('urlsCrawled');
+    _getCacheBustQuery(url) {
+      const queryDelimeter = url.indexOf('?') === NOT_AN_INDEX ? '?' : '&';
+      return `${queryDelimeter}${this._get('cacheBustString')}`;
+    }
+
+    _onResponse(queueItem, finish, error, response, body) {
+      const maxRetries = this._get('retries');
+      const retriedUrls = this._get('retriedUrls');
+      const url = queueItem.url;
+      const urlsCrawled = this._get('urlsCrawled');
 
       // Make sure response is an object
       if (!response || typeof response !== 'object') {
-      	response = {
+        response = {
           url: queueItem.url
         };
+      }
+
+      // Strip cache busting query string
+      if (this._get('cacheBust') === true) {
+        response.url = url.replace(this._getCacheBustQuery(url), '');
       }
 
       // Save referrer to response if present
@@ -221,41 +250,42 @@ var urllib = require('url');
       this._processRedirect(url, response);
 
       // If this URL has already been processed, just continue
-      if (urlsCrawled.indexOf(response.url) > -1) {
+      if (urlsCrawled.indexOf(response.url) > NOT_AN_INDEX) {
         return finish();
       }
 
       // Handle errors
-      if (error || response.statusCode !== 200) {
+      if (error || response.statusCode !== HTTP_STATUS_OK) {
 
         // Ignore error if it's due to a bad content-length and we're checking an external link
         // TODO: figure out how to write a test for this
         if (
         	error !== null &&
         	error.code === 'HPE_INVALID_CONSTANT' &&
-        	response.statusCode === 200 &&
+        	response.statusCode === HTTP_STATUS_OK &&
           // check both requested URL and final URL
         	(
             this._isExternal(urllib.parse(response.url)) === true ||
             this._isExternal(urllib.parse(url)) === true
           )
         ) {
-        	error = null;
+          error = null;
         }
 
         // Retry URLs if retries is set
         if (
           maxRetries > 0 &&
-          (!error || error.message.indexOf('Exceeded maxRedirects.') !== 0) // Do not retry redirects (that's handled in the request)
+          // Do not retry redirects (that's handled in the request)
+          (!error || error.message.indexOf('Exceeded maxRedirects.') !== 0)
         ) {
-           if (retriedUrls.hasOwnProperty(url) === false) {
-             retriedUrls[url] = 0;
-           }
-           if (retriedUrls[url] < maxRetries) {
-             retriedUrls[url]++; // increase number of retries for page
-             this._get('asyncQueue').unshift(queueItem); // add URL to the front of the queue
-             return finish();
-           }
+          if (retriedUrls.hasOwnProperty(url) === false) {
+            retriedUrls[url] = 0;
+          }
+          if (retriedUrls[url] < maxRetries) {
+            retriedUrls[url]++; // increase number of retries for page
+            this._get('asyncQueue').unshift(queueItem); // add URL to the front of the queue
+            return finish();
+          }
         }
 
         // Add url or final URL to list of pages crawled
@@ -267,8 +297,6 @@ var urllib = require('url');
 
       // Add final page URL to list of pages crawled
       urlsCrawled.push(response.url);
-
-
 
       // Check if crawler was killed before the response was recieved
       if (this.killed !== true) {
@@ -283,11 +311,8 @@ var urllib = require('url');
       finish();
     }
 
-    _processRedirect (url, response) {
-      'use strict';
-
-      var finalUrl;
-      var urlsCrawled = this._get('urlsCrawled');
+    _processRedirect(url, response) {
+      const urlsCrawled = this._get('urlsCrawled');
 
       // Do nothing if response doesn't have a URL
       if (!response.url) {
@@ -295,7 +320,7 @@ var urllib = require('url');
       }
 
       // Normalize final URL
-      finalUrl = this.normalizeUrl(response.url);
+      const finalUrl = this.normalizeUrl(response.url);
 
       // Redirect detection happens here
       if (url === finalUrl) {
@@ -317,24 +342,21 @@ var urllib = require('url');
       return true; // return tru to say this is a redirect
     }
 
-    _queueLinks (url, html) {
-      var cheerio = require('cheerio');
-      var crawler = this;
-      var $ = cheerio.load(html);
-      var pageLinks = [];
+    _queueLinks(url, html) {
+      const $ = cheerio.load(html);
+      const pageLinks = [];
 
-      $('a').each(function () {
-        var href = $(this).attr('href');
-        var fullHref;
+      $('a').each((index, el) => {
+        const href = $(el).attr('href');
 
-  			if (href) {
-          fullHref = urllib.resolve(crawler._get('mainUrl'), href);
+        if (href) {
+          const fullHref = urllib.resolve(this._get('mainUrl'), href);
           if (pageLinks.indexOf(fullHref) < 0) {
             pageLinks.push(fullHref);
-            crawler.queue(fullHref, url);
+            this.queue(fullHref, url);
           }
-  			}
-  		});
+        }
+      });
 
       return pageLinks;
     }
