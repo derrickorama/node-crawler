@@ -47,6 +47,10 @@ Here's a list of all available parameters you can supply when instantiating a ne
 
 Defaults to **true**. Determines whether a request will save cookies.
 
+### cacheBust
+
+Defaults to **false**. Will add a date-based query string to the end of each URL to "bust" the cache.
+
 ### crawlExternal
 
 Defaults to **false**. Determines whether crawler will make a request to an external resource. Note: this does not cause the crawler to download the external resource.
