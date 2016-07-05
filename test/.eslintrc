@@ -5,4 +5,7 @@
     "describe": 1,
     "it": 1
   },
+  "rules": {
+    "max-nested-callbacks": 0
+  }
 }
