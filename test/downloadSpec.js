@@ -67,8 +67,29 @@ describe('request headers', function () {
     crawler.queue('http://localhost:8888/file.png');
   });
 
-  it('can decode gzipped data', function (done) {
-    server.onUrl('/', function (req, res) {
+  it('does not download based on provided paths when cache busting is enabled', (done) => {
+    const NOT_AN_INDEX = -1;
+
+    const crawler = new Crawler({
+      cacheBust: true,
+      doNotDownload: [/\.jpg$/]
+    });
+    crawler.on('pageCrawled', (response, body) => {
+      if (response.url.indexOf('file') === NOT_AN_INDEX) {
+        body.should.equal('OK');
+      } else {
+        body.should.equal('');
+      }
+    });
+    crawler.on('finish', () => {
+      done();
+    });
+    crawler.start('http://localhost:8888');
+    crawler.queue('http://localhost:8888/file.jpg');
+  });
+
+  it('can decode gzipped data', (done) => {
+    server.onUrl('/', (req, res) => {
       var raw = fs.createReadStream(pathlib.join(__dirname, 'mocks', 'some-text.txt'));
       res.writeHead(200, { 'content-encoding': 'gzip', 'content-type': 'text/html' });
       raw.pipe(zlib.createGzip()).pipe(res);

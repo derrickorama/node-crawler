@@ -177,6 +177,7 @@ const NOT_AN_INDEX = -1;
       // Get page data
       request({
         url: queueItem.isExternal ? queueItem.url : this._buildUrl(queueItem.url),
+        originalUrl: queueItem.url,
         auth: this._get('auth'),
         cookie: this._get('cookie'),
         doNotDownload: this._get('doNotDownload'),

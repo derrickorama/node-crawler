@@ -1,8 +1,11 @@
-module.exports = function (params, callback) {
-  var request = require('request');
-  var abortedDownload = false;
+'use strict';
 
-  var requestParams = {
+const request = require('request');
+
+module.exports = function (params, callback) {
+  let abortedDownload = false;
+
+  const requestParams = {
     url: params.url,
     gzip: true, // accept gzip, always
     headers: params.headers,
@@ -14,36 +17,12 @@ module.exports = function (params, callback) {
 
   if (params.isExternal !== true && params.auth) {
     requestParams.auth = Object.assign({
-      sendImmediately: false // this forces request to wait for the 401 status code before using authentication
+      // this forces request to wait for the 401 status code before using authentication
+      sendImmediately: false
     }, params.auth);
   }
 
-  var req = request.get(requestParams, finish)
-    .on('response', function (response) {
-
-      // Abort (preventing download) for the following pages
-      if (
-        // External pages (we don't need the body for anything)
-        params.isExternal === true ||
-        // Non-text documents
-        (response.headers && response.headers['content-type'] && response.headers['content-type'].indexOf('text/') < 0) ||
-        // Paths that match the doNotDownload list
-        params.doNotDownload.reduce((hasExclude, exclude) => (params.url.search(exclude) > -1 || hasExclude), false)
-      ) {
-        req.abort();
-        abortedDownload = response;
-      }
-    })
-    .on('end', function () {
-      // If we aborted the download, proceed to finish
-      if (abortedDownload) {
-        finish(null, abortedDownload, '');
-      }
-    });
-
-  return req;
-
-  function finish(error, response, body) {
+  const finish = (error, response, body) => {
     // Add "url" property to response
     if (response) {
       response.url = response.request.href;
@@ -60,5 +39,36 @@ module.exports = function (params, callback) {
     }
 
     callback(error, response, body || '');
-  }
+  };
+
+  const req = request.get(requestParams, finish)
+    .on('response', (response) => {
+      const NOT_AN_INDEX = -1;
+
+      // Abort (preventing download) for the following pages
+      if (
+        // External pages (we don't need the body for anything)
+        params.isExternal === true ||
+        // Non-text documents
+        response.headers &&
+        response.headers['content-type'] &&
+        response.headers['content-type'].indexOf('text/') < 0 ||
+        // Paths that match the doNotDownload list
+        params.doNotDownload.reduce(
+          (hasExclude, exclude) =>
+            params.originalUrl.search(exclude) !== NOT_AN_INDEX || hasExclude
+        , false)
+      ) {
+        req.abort();
+        abortedDownload = response;
+      }
+    })
+    .on('end', () => {
+      // If we aborted the download, proceed to finish
+      if (abortedDownload) {
+        finish(null, abortedDownload, '');
+      }
+    });
+
+  return req;
 };

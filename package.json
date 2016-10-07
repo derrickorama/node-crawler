@@ -1,15 +1,16 @@
 {
   "name": "node-crawler",
   "description": "A web crawler module for Node.js.",
-  "version": "3.1.0",
+  "version": "3.1.2",
   "author": "Derrick Gall",
   "engines": [
-    "node 4.2.x"
+    "node 4.6.0"
   ],
   "devDependencies": {
-    "mocha": "^2.3.4",
-    "should": "^8.0.1",
-    "sinon": "^1.17.2"
+    "mocha": "^3.1.0",
+    "should": "^11.1.0",
+    "sinon": "^1.17.6",
+    "winston": "^2.2.0"
   },
   "dependencies": {
     "async": "^1.5.0",
