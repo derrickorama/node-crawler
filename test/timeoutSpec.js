@@ -30,10 +30,10 @@ describe('timeout handling', function () {
     });
   });
 
-  it('throws an ETIMEDOUT error', function (done) {
+  it('throws an ESOCKETTIMEDOUT error', function (done) {
     crawler.start('http://localhost:8888');
     crawler.on('error', function (error) {
-      error.code.should.equal('ETIMEDOUT');
+      error.code.should.equal('ESOCKETTIMEDOUT');
       error.message.should.equal('Request timed out.');
       done();
     });

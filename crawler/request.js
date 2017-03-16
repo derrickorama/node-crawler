@@ -33,7 +33,7 @@ module.exports = function (params, callback) {
       if (error.message.indexOf('Exceeded maxRedirects') === 0) {
         error.code = 'MAX_REDIRECTS_REACHED';
       }
-      if (error.message === 'ETIMEDOUT') {
+      if (error.message === 'ESOCKETTIMEDOUT') {
         error.message = 'Request timed out.';
       }
     }
