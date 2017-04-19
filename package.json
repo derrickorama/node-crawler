@@ -15,9 +15,11 @@
   "dependencies": {
     "async": "^1.5.0",
     "cheerio": "^0.19.0",
+    "lodash": "^4.17.4",
     "request": "^2.67.0",
     "tough-cookie": "^2.2.1",
-    "winston": "^2.1.1"
+    "winston": "^2.1.1",
+    "yargs": "^7.1.0"
   },
   "license": "MIT",
   "main": "./crawler",
