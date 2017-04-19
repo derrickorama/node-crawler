@@ -211,14 +211,18 @@ const NOT_AN_INDEX = -1;
 
     _buildUrl(url) {
       if (this._get('cacheBust') === true) {
-        return `${url}${this._getCacheBustQuery(url)}`;
+        return `${url}${this._makeCacheBustUrl(url)}`;
       }
       return url;
     }
 
-    _getCacheBustQuery(url) {
-      const queryDelimeter = url.indexOf('?') === NOT_AN_INDEX ? '?' : '&';
+    _makeCacheBustUrl(url) {
+      const queryDelimeter = url.includes('?') ? '&' : '?';
       return `${queryDelimeter}${this._get('cacheBustString')}`;
+    }
+
+    _stripCacheBustQuery(url) {
+      return url.replace(new RegExp(`[\?&]${this._get('cacheBustString')}`, 'gi'), '');
     }
 
     _onResponse(queueItem, finish, error, response, body) {
@@ -236,7 +240,7 @@ const NOT_AN_INDEX = -1;
 
       // Strip cache busting query string
       if (this._get('cacheBust') === true) {
-        response.url = url.replace(this._getCacheBustQuery(url), '');
+        response.url = this._stripCacheBustQuery(response.url);
       }
 
       // Save referrer to response if present

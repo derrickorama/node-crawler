@@ -67,6 +67,18 @@ describe('redirect event', function () {
     crawler.queue('http://localhost:8888/page-1');
   });
 
+  it(`with cache busting enabled,${' '
+    }calls all "redirect" event handlers when a redirect occurs `, (done) => {
+    crawler.set('cacheBust', true);
+    crawler.on('redirect', (response) => {
+      response.redirect.should.equal('http://localhost:8888/page-1');
+      response.url.should.equal('http://localhost:8888/page-2');
+      done();
+    });
+    crawler.start('http://localhost:8888');
+    crawler.queue('http://localhost:8888/page-1');
+  });
+
   it('does not call "redirect" event handlers not called for non-redirects', function (done) {
     var redirectHandler = sinon.spy();
     crawler.on('redirect', redirectHandler);

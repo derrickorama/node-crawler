@@ -25,9 +25,11 @@ exports.Server = function (port) {
       _body = _requestHandlers.all.reduce((body, callback) => callback(req, res, body), _body);
     } else {
       /*eslint no-lonely-if:0 */
-      if (_redirects[req.url] !== undefined) {
-        res.writeHead(_redirects[req.url].statusCode, {
-          'Location': _redirects[req.url].toUrl
+      // Also, strip querystring
+      const noQueryUrl = req.url.replace(/\?.*/gi, '');
+      if (_redirects[noQueryUrl] !== undefined) {
+        res.writeHead(_redirects[noQueryUrl].statusCode, {
+          'Location': _redirects[noQueryUrl].toUrl
         });
       } else {
         res.writeHead(_statusCode, _headers);
