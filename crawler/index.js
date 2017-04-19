@@ -1,13 +1,12 @@
-'use strict';
-
 const pathlib = require('path');
 const urllib = require('url');
 const async = require('async');
 const cheerio = require('cheerio');
+const _ = require('lodash');
 const request = require(pathlib.join(__dirname, 'request'));
 
 const HTTP_STATUS_OK = 200;
-const NOT_AN_INDEX = -1;
+const NO_RETRIES = 0;
 
 (function () {
 
@@ -110,7 +109,7 @@ const NOT_AN_INDEX = -1;
       }
 
       // Do not add URLs that have already been crawled
-      if (this._get('urlsCrawled').indexOf(normalizedUrl) > NOT_AN_INDEX) {
+      if (this._get('urlsCrawled').includes(normalizedUrl)) {
         return false;
       }
 
@@ -119,7 +118,7 @@ const NOT_AN_INDEX = -1;
 
       // Do not add URLs that match any exclude patterns
       const isExcludedUrl = excludes.reduce(
-        (isExclude, exclude) => normalizedUrl.search(exclude) > NOT_AN_INDEX || isExclude,
+        (isExclude, exclude) => normalizedUrl.match(exclude) !== null || isExclude,
       false);
       if (isExcludedUrl || urlData.host === '') {
         return false;
@@ -255,7 +254,7 @@ const NOT_AN_INDEX = -1;
       this._processRedirect(url, response);
 
       // If this URL has already been processed, just continue
-      if (urlsCrawled.indexOf(response.url) > NOT_AN_INDEX) {
+      if (urlsCrawled.includes(response.url)) {
         return finish();
       }
 
@@ -279,9 +278,9 @@ const NOT_AN_INDEX = -1;
 
         // Retry URLs if retries is set
         if (
-          maxRetries > 0 &&
+          maxRetries > NO_RETRIES &&
           // Do not retry redirects (that's handled in the request)
-          (!error || error.message.indexOf('Exceeded maxRedirects.') !== 0)
+          _.get(error, 'message', '').startsWith('Exceeded maxRedirects') !== true
         ) {
           if (retriedUrls.hasOwnProperty(url) === false) {
             retriedUrls[url] = 0;
@@ -337,7 +336,7 @@ const NOT_AN_INDEX = -1;
       response.redirect = url;
 
       // Add URL to list of URLs crawled
-      if (urlsCrawled.indexOf(url) < 0) {
+      if (!urlsCrawled.includes(url)) {
         urlsCrawled.push(url);
       }
 
@@ -356,7 +355,7 @@ const NOT_AN_INDEX = -1;
 
         if (href) {
           const fullHref = urllib.resolve(this._get('mainUrl'), href);
-          if (pageLinks.indexOf(fullHref) < 0) {
+          if (!pageLinks.includes(fullHref)) {
             pageLinks.push(fullHref);
             this.queue(fullHref, url);
           }
