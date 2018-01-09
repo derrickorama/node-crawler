@@ -4,7 +4,7 @@
   "version": "3.4.1",
   "author": "Derrick Gall",
   "engines": {
-    "node": "6.x.x"
+    "node": ">=6.0.0"
   },
   "devDependencies": {
     "mocha": "^3.1.0",
